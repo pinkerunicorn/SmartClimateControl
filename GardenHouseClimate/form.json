@@ -15,9 +15,31 @@
             "caption": "Temperatur Außen"
         },
         {
-            "type": "SelectVariable",
-            "name": "SensorWindow",
-            "caption": "Fenster-/Türkontakt"
+            "type": "List",
+            "name": "SensorWindows",
+            "caption": "Fenster-/Türkontakte (Gartenhaus)",
+            "add": true,
+            "delete": true,
+            "columns": [
+                {
+                    "caption": "Sensor",
+                    "name": "VariableID",
+                    "width": "auto",
+                    "add": 0,
+                    "edit": {
+                        "type": "SelectVariable"
+                    }
+                },
+                {
+                    "caption": "Wert für Geschlossen",
+                    "name": "ClosedValue",
+                    "width": "150px",
+                    "add": "false",
+                    "edit": {
+                        "type": "ValidationTextBox"
+                    }
+                }
+            ]
         },
         {
             "type": "Label",

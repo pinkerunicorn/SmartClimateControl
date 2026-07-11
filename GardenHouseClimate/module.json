@@ -21,9 +21,9 @@
             "type": "integer",
             "default": 0
         },
-        "SensorWindow": {
-            "type": "integer",
-            "default": 0
+        "SensorWindows": {
+            "type": "string",
+            "default": "[]"
         },
         "ActuatorHeaterPlug": {
             "type": "integer",

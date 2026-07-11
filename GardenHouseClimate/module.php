@@ -11,7 +11,7 @@ class GardenHouseClimate extends IPSModule
         // Properties
         $this->RegisterPropertyInteger("SensorTempInside", 0);
         $this->RegisterPropertyInteger("SensorTempOutside", 0);
-        $this->RegisterPropertyInteger("SensorWindow", 0);
+        $this->RegisterPropertyString("SensorWindows", "[]");
         
         $this->RegisterPropertyInteger("ActuatorHeaterPlug", 0);
         $this->RegisterPropertyInteger("SensorHeaterPower", 0);
@@ -60,13 +60,23 @@ class GardenHouseClimate extends IPSModule
         }
         
         $sensors = [
-            "SensorTempInside", "SensorTempOutside", "SensorWindow"
+            "SensorTempInside", "SensorTempOutside"
         ];
         
         foreach ($sensors as $sensorName) {
             $id = $this->ReadPropertyInteger($sensorName);
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterMessage($id, VM_UPDATE);
+            }
+        }
+        
+        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
+        if (is_array($windows)) {
+            foreach ($windows as $w) {
+                $vid = $w['VariableID'] ?? 0;
+                if ($vid > 0 && IPS_VariableExists($vid)) {
+                    $this->RegisterMessage($vid, VM_UPDATE);
+                }
             }
         }
         
@@ -81,12 +91,36 @@ class GardenHouseClimate extends IPSModule
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
     {
         $powerId = $this->ReadPropertyInteger("SensorHeaterPower");
-        $windowId = $this->ReadPropertyInteger("SensorWindow");
+        $isWindow = false;
+        
+        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
+        if (is_array($windows)) {
+            foreach ($windows as $w) {
+                if (($w['VariableID'] ?? 0) == $SenderID) {
+                    $isWindow = true;
+                    break;
+                }
+            }
+        }
         
         if ($SenderID == $powerId) {
             $this->HandlePowerUpdate($Data[0]);
-        } elseif ($SenderID == $windowId) {
-            $this->HandleWindowUpdate($Data[0]);
+        } elseif ($isWindow) {
+            // Check if any window is open
+            $windowOpen = false;
+            if (is_array($windows)) {
+                foreach ($windows as $w) {
+                    $vid = $w['VariableID'] ?? 0;
+                    $closedVal = $w['ClosedValue'] ?? 'false';
+                    if ($vid > 0 && IPS_VariableExists($vid)) {
+                        if ($this->IsWindowOpen($vid, $closedVal)) {
+                            $windowOpen = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            $this->HandleWindowUpdate($windowOpen);
             $this->UpdateClimate();
         } else {
             $this->UpdateClimate();
@@ -125,7 +159,21 @@ class GardenHouseClimate extends IPSModule
         
         $tempIn = $this->GetVarValue("SensorTempInside");
         $tempOut = $this->GetVarValue("SensorTempOutside");
-        $windowOpen = $this->GetVarValue("SensorWindow");
+        
+        $windowOpen = false;
+        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
+        if (is_array($windows)) {
+            foreach ($windows as $w) {
+                $vid = $w['VariableID'] ?? 0;
+                $closedVal = $w['ClosedValue'] ?? 'false';
+                if ($vid > 0 && IPS_VariableExists($vid)) {
+                    if ($this->IsWindowOpen($vid, $closedVal)) {
+                        $windowOpen = true;
+                        break;
+                    }
+                }
+            }
+        }
         
         if ($tempIn === null) return;
         
@@ -241,5 +289,20 @@ class GardenHouseClimate extends IPSModule
             return GetValue($id);
         }
         return null;
+    }
+    
+    private function IsWindowOpen($vid, $closedValue)
+    {
+        $currentVal = GetValue($vid);
+        $isClosed = false;
+        
+        if (is_bool($currentVal)) {
+            $targetBool = ($closedValue === 'true' || $closedValue === '1' || strtolower((string)$closedValue) === 'wahr');
+            $isClosed = ($currentVal === $targetBool);
+        } else {
+            $isClosed = ((string)$currentVal === (string)$closedValue);
+        }
+        
+        return !$isClosed;
     }
 }

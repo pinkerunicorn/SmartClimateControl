@@ -135,8 +135,9 @@ class BasementClimate extends IPSModule
         if (is_array($windows)) {
             foreach ($windows as $w) {
                 $vid = $w['VariableID'] ?? 0;
+                $closedVal = $w['ClosedValue'] ?? 'false';
                 if ($vid > 0 && IPS_VariableExists($vid)) {
-                    if (GetValue($vid)) {
+                    if ($this->IsWindowOpen($vid, $closedVal)) {
                         $windowOpen = true;
                         break;
                     }
@@ -287,6 +288,21 @@ class BasementClimate extends IPSModule
             return GetValue($id);
         }
         return null;
+    }
+    
+    private function IsWindowOpen($vid, $closedValue)
+    {
+        $currentVal = GetValue($vid);
+        $isClosed = false;
+        
+        if (is_bool($currentVal)) {
+            $targetBool = ($closedValue === 'true' || $closedValue === '1' || strtolower((string)$closedValue) === 'wahr');
+            $isClosed = ($currentVal === $targetBool);
+        } else {
+            $isClosed = ((string)$currentVal === (string)$closedValue);
+        }
+        
+        return !$isClosed;
     }
     
     private function CalculateDewPoint($t, $rh)

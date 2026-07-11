@@ -43,6 +43,15 @@
                     "edit": {
                         "type": "SelectVariable"
                     }
+                },
+                {
+                    "caption": "Wert für Geschlossen",
+                    "name": "ClosedValue",
+                    "width": "150px",
+                    "add": "false",
+                    "edit": {
+                        "type": "ValidationTextBox"
+                    }
                 }
             ]
         },
