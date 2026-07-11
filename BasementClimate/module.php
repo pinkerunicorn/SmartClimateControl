@@ -1,0 +1,290 @@
+<?php
+
+declare(strict_types=1);
+
+class BasementClimate extends IPSModule
+{
+    public function Create()
+    {
+        parent::Create();
+
+        // Properties
+        $this->RegisterPropertyInteger("SensorTempOutside", 0);
+        $this->RegisterPropertyInteger("SensorHumOutside", 0);
+        $this->RegisterPropertyInteger("SensorTempInside", 0);
+        $this->RegisterPropertyInteger("SensorHumInside", 0);
+        $this->RegisterPropertyInteger("SensorWindow", 0);
+        
+        $this->RegisterPropertyInteger("ActuatorDehumidifierPlug", 0);
+        $this->RegisterPropertyInteger("SensorDehumidifierPower", 0);
+        
+        $this->RegisterPropertyInteger("ActuatorRadiator1", 0);
+        $this->RegisterPropertyInteger("ActuatorRadiator2", 0);
+        
+        $this->RegisterPropertyFloat("DehumidifierMaxHum", 60.0);
+        $this->RegisterPropertyFloat("DehumidifierMinHum", 55.0);
+        $this->RegisterPropertyFloat("DehumidifierPowerThreshold", 10.0);
+        $this->RegisterPropertyInteger("DehumidifierPowerTime", 60);
+        
+        $this->RegisterPropertyFloat("TargetTemperature", 18.0);
+        
+        // Variables
+        $this->RegisterVariableBoolean("VentilationRecommendation", "Lüften empfohlen!", "~Switch");
+        $this->RegisterVariableString("VentilationDetails", "Hinweis");
+        
+        $this->RegisterVariableFloat("DewPointInside", "Taupunkt Keller", "~Temperature");
+        $this->RegisterVariableFloat("DewPointOutside", "Taupunkt Außen", "~Temperature");
+        
+        $this->RegisterVariableFloat("AbsHumInside", "Absolute Feuchte Keller", "");
+        $this->RegisterVariableFloat("AbsHumOutside", "Absolute Feuchte Außen", "");
+        
+        // Status of Dehumidifier
+        $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), '{"Type":"Label","Format":"%s"}'); // Example for IPS 8 Custom Presentation
+        
+        // Tank Alarm Variable with Action Script to Acknowledge
+        $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "~Alert");
+        $this->EnableAction("AlarmTankFull");
+        
+        // Timers
+        $this->RegisterTimer("PowerCheckTimer", 0, 'BC_CheckPowerThreshold($_IPS[\'TARGET\']);');
+    }
+
+    public function ApplyChanges()
+    {
+        parent::ApplyChanges();
+        
+        // Unregister all messages first
+        foreach ($this->GetMessageList() as $senderID => $messages) {
+            foreach ($messages as $message) {
+                $this->UnregisterMessage($senderID, $message);
+            }
+        }
+        
+        // Register messages for sensors
+        $sensors = [
+            "SensorTempOutside", "SensorHumOutside", 
+            "SensorTempInside", "SensorHumInside", "SensorWindow"
+        ];
+        
+        foreach ($sensors as $sensorName) {
+            $id = $this->ReadPropertyInteger($sensorName);
+            if ($id > 0 && IPS_VariableExists($id)) {
+                $this->RegisterMessage($id, VM_UPDATE);
+            }
+        }
+        
+        // Register message for Power Sensor
+        $powerId = $this->ReadPropertyInteger("SensorDehumidifierPower");
+        if ($powerId > 0 && IPS_VariableExists($powerId)) {
+            $this->RegisterMessage($powerId, VM_UPDATE);
+        }
+        
+        // Initial Update
+        $this->UpdateClimate();
+    }
+    
+    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
+    {
+        $powerId = $this->ReadPropertyInteger("SensorDehumidifierPower");
+        
+        if ($SenderID == $powerId) {
+            $this->HandlePowerUpdate($Data[0]);
+        } else {
+            $this->UpdateClimate();
+        }
+    }
+    
+    public function RequestAction($Ident, $Value)
+    {
+        switch ($Ident) {
+            case "AlarmTankFull":
+                // Acknowledge the alarm (set to false)
+                if ($Value == false) {
+                    $this->SetValue("AlarmTankFull", false);
+                    $this->UpdateClimate();
+                }
+                break;
+            default:
+                throw new Exception("Invalid Ident");
+        }
+    }
+
+    public function UpdateClimate()
+    {
+        $tempOut = $this->GetVarValue("SensorTempOutside");
+        $humOut = $this->GetVarValue("SensorHumOutside");
+        $tempIn = $this->GetVarValue("SensorTempInside");
+        $humIn = $this->GetVarValue("SensorHumInside");
+        $windowOpen = $this->GetVarValue("SensorWindow");
+        
+        if ($tempOut !== null && $humOut !== null && $tempIn !== null && $humIn !== null) {
+            // Calculate Absolute Humidity and Dew Point
+            $absOut = $this->CalculateAbsoluteHumidity($tempOut, $humOut);
+            $dpOut = $this->CalculateDewPoint($tempOut, $humOut);
+            
+            $absIn = $this->CalculateAbsoluteHumidity($tempIn, $humIn);
+            $dpIn = $this->CalculateDewPoint($tempIn, $humIn);
+            
+            $this->SetValue("AbsHumOutside", $absOut);
+            $this->SetValue("DewPointOutside", $dpOut);
+            
+            $this->SetValue("AbsHumInside", $absIn);
+            $this->SetValue("DewPointInside", $dpIn);
+            
+            // Ventilation logic
+            $recommendation = false;
+            $details = "Keine Lüftung empfohlen.";
+            
+            if ($absOut < $absIn) {
+                $recommendation = true;
+                $details = sprintf("Lüften führt zur Trocknung (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+            }
+            
+            $this->SetValue("VentilationRecommendation", $recommendation);
+            $this->SetValue("VentilationDetails", $details);
+            
+            // Dehumidifier Logic
+            $this->ControlDehumidifier($humIn, $windowOpen);
+        }
+        
+        // Heating Logic
+        $this->ControlHeating($humIn);
+    }
+    
+    private function ControlDehumidifier($humIn, $windowOpen)
+    {
+        $plugId = $this->ReadPropertyInteger("ActuatorDehumidifierPlug");
+        if ($plugId == 0 || !IPS_VariableExists($plugId)) return;
+        
+        $maxHum = $this->ReadPropertyFloat("DehumidifierMaxHum");
+        $minHum = $this->ReadPropertyFloat("DehumidifierMinHum");
+        $tankFull = $this->GetValue("AlarmTankFull");
+        
+        $plugStatus = GetValue($plugId);
+        $newStatus = $plugStatus;
+        $statusText = 0; // 0=Off, 1=On, 2=Window Open, 3=Tank Full
+        
+        if ($windowOpen) {
+            $newStatus = false;
+            $statusText = 2;
+        } elseif ($tankFull) {
+            $newStatus = false;
+            $statusText = 3;
+        } else {
+            if ($humIn >= $maxHum) {
+                $newStatus = true;
+                $statusText = 1;
+            } elseif ($humIn <= $minHum) {
+                $newStatus = false;
+                $statusText = 0;
+            } else {
+                $statusText = $plugStatus ? 1 : 0;
+            }
+        }
+        
+        if ($plugStatus != $newStatus) {
+            RequestAction($plugId, $newStatus);
+        }
+        
+        $this->SetValue("DehumidifierStatus", $statusText);
+    }
+    
+    private function ControlHeating($humIn)
+    {
+        $rad1 = $this->ReadPropertyInteger("ActuatorRadiator1");
+        $rad2 = $this->ReadPropertyInteger("ActuatorRadiator2");
+        $targetBase = $this->ReadPropertyFloat("TargetTemperature");
+        
+        // Anti-Mold Logic: If humidity is extremely high, raise temp by 2 degrees
+        $targetTemp = $targetBase;
+        if ($humIn > 70.0) {
+            $targetTemp += 2.0;
+        }
+        
+        if ($rad1 > 0 && IPS_VariableExists($rad1)) {
+            $currentRad1 = GetValue($rad1);
+            if ($currentRad1 != $targetTemp) {
+                RequestAction($rad1, $targetTemp);
+            }
+        }
+        
+        if ($rad2 > 0 && IPS_VariableExists($rad2)) {
+            $currentRad2 = GetValue($rad2);
+            if ($currentRad2 != $targetTemp) {
+                RequestAction($rad2, $targetTemp);
+            }
+        }
+    }
+    
+    private function HandlePowerUpdate($currentPower)
+    {
+        $plugId = $this->ReadPropertyInteger("ActuatorDehumidifierPlug");
+        if ($plugId == 0) return;
+        
+        $plugStatus = GetValue($plugId);
+        $threshold = $this->ReadPropertyFloat("DehumidifierPowerThreshold");
+        $timeLimit = $this->ReadPropertyInteger("DehumidifierPowerTime");
+        
+        // We only care if the plug is logically ON
+        if ($plugStatus) {
+            if ($currentPower < $threshold) {
+                // If timer is not running, start it
+                $timerData = $this->GetTimerInterval("PowerCheckTimer");
+                if ($timerData == 0) {
+                    $this->SetTimerInterval("PowerCheckTimer", $timeLimit * 1000);
+                }
+            } else {
+                // Power is fine, stop timer
+                $this->SetTimerInterval("PowerCheckTimer", 0);
+            }
+        } else {
+            $this->SetTimerInterval("PowerCheckTimer", 0);
+        }
+    }
+    
+    public function CheckPowerThreshold()
+    {
+        $this->SetTimerInterval("PowerCheckTimer", 0); // Stop timer
+        
+        // If we reach this, the power was below threshold for X seconds while the plug was ON.
+        $this->SetValue("AlarmTankFull", true);
+        
+        // Dehumidifier Logic will catch this on next update, let's force it
+        $this->UpdateClimate();
+    }
+    
+    private function GetVarValue($propertyName)
+    {
+        $id = $this->ReadPropertyInteger($propertyName);
+        if ($id > 0 && IPS_VariableExists($id)) {
+            return GetValue($id);
+        }
+        return null;
+    }
+    
+    private function CalculateDewPoint($t, $rh)
+    {
+        if ($t < 0) {
+            $a = 7.6; $b = 240.7;
+        } else {
+            $a = 7.5; $b = 237.3;
+        }
+        $sdd = 6.1078 * pow(10, ($a * $t) / ($b + $t));
+        $dd = $sdd * ($rh / 100);
+        $v = log10($dd / 6.1078);
+        return ($b * $v) / ($a - $v);
+    }
+    
+    private function CalculateAbsoluteHumidity($t, $rh)
+    {
+        if ($t < 0) {
+            $a = 7.6; $b = 240.7;
+        } else {
+            $a = 7.5; $b = 237.3;
+        }
+        $sdd = 6.1078 * pow(10, ($a * $t) / ($b + $t));
+        $dd = $sdd * ($rh / 100);
+        return 100000 * 18.016 / 8314.3 * $dd / ($t + 273.15);
+    }
+}

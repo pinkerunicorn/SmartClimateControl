@@ -1,0 +1,79 @@
+{
+    "elements": [
+        {
+            "type": "Label",
+            "caption": "Sensoren"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "SensorTempInside",
+            "caption": "Temperatur Gartenhaus"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "SensorTempOutside",
+            "caption": "Temperatur Außen"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "SensorWindow",
+            "caption": "Fenster-/Türkontakt"
+        },
+        {
+            "type": "Label",
+            "caption": "Aktoren"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "ActuatorHeaterPlug",
+            "caption": "Schaltsteckdose Heizung"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "SensorHeaterPower",
+            "caption": "Leistungsmessung Heizung (Watt)"
+        },
+        {
+            "type": "Label",
+            "caption": "Einstellungen Heizung (Zweipunktregler)"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "TargetTemperature",
+            "caption": "Zieltemperatur Frostschutz (°C)",
+            "digits": 1
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "Hysteresis",
+            "caption": "Hysterese (°C)",
+            "digits": 1
+        },
+        {
+            "type": "Label",
+            "caption": "Ausfallsicherheit / Alarme"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "HeaterPowerThreshold",
+            "caption": "Erwarteter Mindest-Verbrauch bei AN (Watt)",
+            "digits": 1
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "HeaterDefectTime",
+            "caption": "Zeit bis Defekt-Alarm (Sekunden)"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "WindowOpenTime",
+            "caption": "Zeit bis Fenster-offen-Alarm im Winter (Sekunden)"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "FrostWarningTemp",
+            "caption": "Temperatur für kritischen Frost-Alarm (°C)",
+            "digits": 1
+        }
+    ]
+}
