@@ -13,7 +13,7 @@ class BasementClimate extends IPSModule
         $this->RegisterPropertyInteger("SensorHumOutside", 0);
         $this->RegisterPropertyInteger("SensorTempInside", 0);
         $this->RegisterPropertyInteger("SensorHumInside", 0);
-        $this->RegisterPropertyInteger("SensorWindow", 0);
+        $this->RegisterPropertyString("SensorWindows", "[]");
         
         $this->RegisterPropertyInteger("ActuatorDehumidifierPlug", 0);
         $this->RegisterPropertyInteger("SensorDehumidifierPower", 0);
@@ -66,13 +66,24 @@ class BasementClimate extends IPSModule
         // Register messages for sensors
         $sensors = [
             "SensorTempOutside", "SensorHumOutside", 
-            "SensorTempInside", "SensorHumInside", "SensorWindow"
+            "SensorTempInside", "SensorHumInside"
         ];
         
         foreach ($sensors as $sensorName) {
             $id = $this->ReadPropertyInteger($sensorName);
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterMessage($id, VM_UPDATE);
+            }
+        }
+        
+        // Register messages for window sensors
+        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
+        if (is_array($windows)) {
+            foreach ($windows as $w) {
+                $vid = $w['VariableID'] ?? 0;
+                if ($vid > 0 && IPS_VariableExists($vid)) {
+                    $this->RegisterMessage($vid, VM_UPDATE);
+                }
             }
         }
         
@@ -118,7 +129,20 @@ class BasementClimate extends IPSModule
         $humOut = $this->GetVarValue("SensorHumOutside");
         $tempIn = $this->GetVarValue("SensorTempInside");
         $humIn = $this->GetVarValue("SensorHumInside");
-        $windowOpen = $this->GetVarValue("SensorWindow");
+        
+        $windowOpen = false;
+        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
+        if (is_array($windows)) {
+            foreach ($windows as $w) {
+                $vid = $w['VariableID'] ?? 0;
+                if ($vid > 0 && IPS_VariableExists($vid)) {
+                    if (GetValue($vid)) {
+                        $windowOpen = true;
+                        break;
+                    }
+                }
+            }
+        }
         
         if ($tempOut !== null && $humOut !== null && $tempIn !== null && $humIn !== null) {
             // Calculate Absolute Humidity and Dew Point

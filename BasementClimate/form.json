@@ -29,9 +29,22 @@
             "caption": "Feuchtigkeit Keller"
         },
         {
-            "type": "SelectVariable",
-            "name": "SensorWindow",
-            "caption": "Fensterkontakt"
+            "type": "List",
+            "name": "SensorWindows",
+            "caption": "Fenster-/Türkontakte (Keller)",
+            "add": true,
+            "delete": true,
+            "columns": [
+                {
+                    "caption": "Sensor",
+                    "name": "VariableID",
+                    "width": "auto",
+                    "add": 0,
+                    "edit": {
+                        "type": "SelectVariable"
+                    }
+                }
+            ]
         },
         {
             "type": "Label",
