@@ -68,6 +68,10 @@
         "TargetTemperature": {
             "type": "float",
             "default": 18.0
+        },
+        "VentilationThreshold": {
+            "type": "float",
+            "default": 0.5
         }
     }
 }

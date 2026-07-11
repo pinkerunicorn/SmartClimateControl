@@ -27,6 +27,7 @@ class BasementClimate extends IPSModule
         $this->RegisterPropertyInteger("DehumidifierPowerTime", 60);
         
         $this->RegisterPropertyFloat("TargetTemperature", 18.0);
+        $this->RegisterPropertyFloat("VentilationThreshold", 0.5);
         
         // Variables
         $this->RegisterVariableBoolean("VentilationRecommendation", "Lüften empfohlen!", "~Switch");
@@ -47,6 +48,9 @@ class BasementClimate extends IPSModule
         // Tank Alarm Variable with Action Script to Acknowledge
         $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "~Alert");
         $this->EnableAction("AlarmTankFull");
+        
+        $this->RegisterVariableBoolean("AlarmWindowClose", "Alarm: Fenster schließen", "~Alert");
+        $this->EnableAction("AlarmWindowClose");
         
         // Timers
         $this->RegisterTimer("PowerCheckTimer", 0, 'BC_CheckPowerThreshold($_IPS[\'TARGET\']);');
@@ -112,9 +116,10 @@ class BasementClimate extends IPSModule
     {
         switch ($Ident) {
             case "AlarmTankFull":
+            case "AlarmWindowClose":
                 // Acknowledge the alarm (set to false)
                 if ($Value == false) {
-                    $this->SetValue("AlarmTankFull", false);
+                    $this->SetValue($Ident, false);
                     $this->UpdateClimate();
                 }
                 break;
@@ -160,12 +165,31 @@ class BasementClimate extends IPSModule
             $this->SetValue("DewPointInside", $dpIn);
             
             // Ventilation logic
+            $threshold = $this->ReadPropertyFloat("VentilationThreshold");
             $recommendation = false;
-            $details = "Keine Lüftung empfohlen.";
+            $closeAlarm = false;
+            $details = "Keine Aktion erforderlich.";
             
-            if ($absOut < $absIn) {
-                $recommendation = true;
-                $details = sprintf("Lüften führt zur Trocknung (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+            if (!$windowOpen) {
+                if ($absOut <= ($absIn - $threshold)) {
+                    $recommendation = true;
+                    $details = sprintf("Lüften empfohlen! Außen ist trockener (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                } else {
+                    $details = sprintf("Lüften lohnt nicht (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                }
+                // Automatically clear close alarm if window is closed
+                $this->SetValue("AlarmWindowClose", false);
+            } else {
+                if ($absOut >= $absIn) {
+                    $closeAlarm = true;
+                    $details = sprintf("⚠️ Fenster SCHLIESSEN! Außen wird es feuchter (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                } else {
+                    $details = sprintf("Lüften trocknet weiterhin (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                }
+                
+                if ($closeAlarm) {
+                    $this->SetValue("AlarmWindowClose", true);
+                }
             }
             
             $this->SetValue("VentilationRecommendation", $recommendation);

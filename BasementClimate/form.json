@@ -115,6 +115,16 @@
             "name": "TargetTemperature",
             "caption": "Basis-Solltemperatur (°C)",
             "digits": 1
+        },
+        {
+            "type": "Label",
+            "caption": "Einstellungen Lüftungsempfehlung"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "VentilationThreshold",
+            "caption": "Mindest-Differenz (g/m³) für Lüftung",
+            "digits": 1
         }
     ]
 }
