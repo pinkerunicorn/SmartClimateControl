@@ -157,6 +157,11 @@ class BasementClimate extends IPSModule
             }
         }
         
+        if ($tempIn !== null && $humIn !== null) {
+            // Dehumidifier Logic requires only inside sensors
+            $this->ControlDehumidifier($humIn, $windowOpen);
+        }
+        
         if ($tempOut !== null && $humOut !== null && $tempIn !== null && $humIn !== null) {
             // Calculate Absolute Humidity and Dew Point
             $absOut = $this->CalculateAbsoluteHumidity($tempOut, $humOut);
@@ -201,9 +206,6 @@ class BasementClimate extends IPSModule
             
             $this->SetValue("VentilationRecommendation", $recommendation);
             $this->SetValue("VentilationDetails", $details);
-            
-            // Dehumidifier Logic
-            $this->ControlDehumidifier($humIn, $windowOpen);
         }
         
         // Heating Logic
