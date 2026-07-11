@@ -29,6 +29,9 @@ class GardenHouseClimate extends IPSModule
         $this->EnableAction("WinterMode");
         $this->SetValue("WinterMode", true); // Default to true
         
+        $this->RegisterVariableFloat("TargetTemperature", "Zieltemperatur Frostschutz", "~Temperature");
+        $this->EnableAction("TargetTemperature");
+        
         if (!IPS_VariableProfileExists("GHC.HeaterStatus")) {
             IPS_CreateVariableProfile("GHC.HeaterStatus", 1);
             IPS_SetVariableProfileAssociation("GHC.HeaterStatus", 0, "Aus", "Sleep", 0x00FF00);
@@ -136,6 +139,10 @@ class GardenHouseClimate extends IPSModule
     public function RequestAction($Ident, $Value)
     {
         switch ($Ident) {
+            case "TargetTemperature":
+                $this->SetValue($Ident, $Value);
+                $this->UpdateClimate();
+                break;
             case "WinterMode":
                 $this->SetValue("WinterMode", $Value);
                 $this->UpdateClimate();
@@ -196,7 +203,7 @@ class GardenHouseClimate extends IPSModule
         }
         
         // Target Temp & Vorsteuerung
-        $targetTemp = $this->ReadPropertyFloat("TargetTemperature");
+        $targetTemp = $this->GetValue("TargetTemperature");
         if ($tempOut !== null && $tempOut <= -5.0) {
             $targetTemp += 1.0; // Puffer bei starkem Frost
         }

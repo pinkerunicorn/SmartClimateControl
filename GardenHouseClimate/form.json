@@ -57,18 +57,12 @@
         },
         {
             "type": "Label",
-            "caption": "Einstellungen Heizung (Zweipunktregler)"
-        },
-        {
-            "type": "NumberSpinner",
-            "name": "TargetTemperature",
-            "caption": "Zieltemperatur Frostschutz (°C)",
-            "digits": 1
+            "caption": "Temperatureinstellungen"
         },
         {
             "type": "NumberSpinner",
             "name": "Hysteresis",
-            "caption": "Hysterese (°C)",
+            "caption": "Schalthysterese (°C)",
             "digits": 1
         },
         {
