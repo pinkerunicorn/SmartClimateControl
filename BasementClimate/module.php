@@ -40,7 +40,14 @@ class BasementClimate extends IPSModule
         $this->RegisterVariableFloat("AbsHumOutside", "Absolute Feuchte Außen", "");
         
         // Status of Dehumidifier
-        $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "");
+        if (!IPS_VariableProfileExists("BC.DehumidifierStatus")) {
+            IPS_CreateVariableProfile("BC.DehumidifierStatus", 1);
+            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 0, "Aus", "Sleep", 0x00FF00);
+            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 1, "Entfeuchten", "Drops", 0x0000FF);
+            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 2, "Pausiert (Fenster offen)", "Window", 0xFFFF00);
+            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 3, "Pausiert (Tank voll)", "Warning", 0xFF0000);
+        }
+        $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
         if (function_exists('IPS_SetVariableCustomPresentation')) {
             IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), []);
         }

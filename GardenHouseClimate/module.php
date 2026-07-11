@@ -29,7 +29,13 @@ class GardenHouseClimate extends IPSModule
         $this->EnableAction("WinterMode");
         $this->SetValue("WinterMode", true); // Default to true
         
-        $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "");
+        if (!IPS_VariableProfileExists("GHC.HeaterStatus")) {
+            IPS_CreateVariableProfile("GHC.HeaterStatus", 1);
+            IPS_SetVariableProfileAssociation("GHC.HeaterStatus", 0, "Aus", "Sleep", 0x00FF00);
+            IPS_SetVariableProfileAssociation("GHC.HeaterStatus", 1, "Heizen", "Flame", 0xFF0000);
+            IPS_SetVariableProfileAssociation("GHC.HeaterStatus", 2, "Pausiert (Fenster offen)", "Window", 0xFFFF00);
+        }
+        $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "GHC.HeaterStatus");
         if (function_exists('IPS_SetVariableCustomPresentation')) {
             IPS_SetVariableCustomPresentation($this->GetIDForIdent("HeaterStatus"), []);
         }
