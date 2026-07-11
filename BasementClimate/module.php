@@ -41,10 +41,18 @@ class BasementClimate extends IPSModule
         // Current values and Thresholds
         $this->RegisterVariableFloat("CurrentHumidity", "Aktuelle Luftfeuchtigkeit", "~Humidity.F");
         
-        $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "~Humidity.F");
+        // Custom profile for thresholds (5% steps)
+        if (!IPS_VariableProfileExists("BC.HumThreshold")) {
+            IPS_CreateVariableProfile("BC.HumThreshold", 2);
+            IPS_SetVariableProfileText("BC.HumThreshold", "", " %");
+            IPS_SetVariableProfileValues("BC.HumThreshold", 30, 90, 5);
+            IPS_SetVariableProfileIcon("BC.HumThreshold", "Humidity");
+        }
+        
+        $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "BC.HumThreshold");
         $this->EnableAction("DehumidifierMaxHum");
         
-        $this->RegisterVariableFloat("DehumidifierMinHum", "Ausschaltschwelle (Min %)", "~Humidity.F");
+        $this->RegisterVariableFloat("DehumidifierMinHum", "Ausschaltschwelle (Min %)", "BC.HumThreshold");
         $this->EnableAction("DehumidifierMinHum");
         
         // Status of Dehumidifier
