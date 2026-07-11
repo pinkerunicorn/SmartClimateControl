@@ -38,6 +38,14 @@ class BasementClimate extends IPSModule
         
         $this->RegisterVariableFloat("AbsHumInside", "Absolute Feuchte Keller", "");
         $this->RegisterVariableFloat("AbsHumOutside", "Absolute Feuchte Außen", "");
+        // Current values and Thresholds
+        $this->RegisterVariableFloat("CurrentHumidity", "Aktuelle Luftfeuchtigkeit", "~Humidity.F");
+        
+        $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "~Humidity.F");
+        $this->EnableAction("DehumidifierMaxHum");
+        
+        $this->RegisterVariableFloat("DehumidifierMinHum", "Ausschaltschwelle (Min %)", "~Humidity.F");
+        $this->EnableAction("DehumidifierMinHum");
         
         // Status of Dehumidifier
         if (!IPS_VariableProfileExists("BC.DehumidifierStatus")) {
@@ -130,6 +138,11 @@ class BasementClimate extends IPSModule
                     $this->UpdateClimate();
                 }
                 break;
+            case "DehumidifierMaxHum":
+            case "DehumidifierMinHum":
+                $this->SetValue($Ident, $Value);
+                $this->UpdateClimate();
+                break;
             default:
                 throw new Exception("Invalid Ident");
         }
@@ -158,6 +171,8 @@ class BasementClimate extends IPSModule
         }
         
         if ($tempIn !== null && $humIn !== null) {
+            $this->SetValue("CurrentHumidity", $humIn);
+            
             // Dehumidifier Logic requires only inside sensors
             $this->ControlDehumidifier($humIn, $windowOpen);
         }
@@ -217,8 +232,8 @@ class BasementClimate extends IPSModule
         $plugId = $this->ReadPropertyInteger("ActuatorDehumidifierPlug");
         if ($plugId == 0 || !IPS_VariableExists($plugId)) return;
         
-        $maxHum = $this->ReadPropertyFloat("DehumidifierMaxHum");
-        $minHum = $this->ReadPropertyFloat("DehumidifierMinHum");
+        $maxHum = $this->GetValue("DehumidifierMaxHum");
+        $minHum = $this->GetValue("DehumidifierMinHum");
         $tankFull = $this->GetValue("AlarmTankFull");
         
         $plugStatus = GetValue($plugId);

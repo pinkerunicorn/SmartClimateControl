@@ -85,20 +85,8 @@
         },
         {
             "type": "NumberSpinner",
-            "name": "DehumidifierMaxHum",
-            "caption": "Einschalt-Schwelle (Max %)",
-            "digits": 1
-        },
-        {
-            "type": "NumberSpinner",
-            "name": "DehumidifierMinHum",
-            "caption": "Ausschalt-Schwelle (Min %)",
-            "digits": 1
-        },
-        {
-            "type": "NumberSpinner",
             "name": "DehumidifierPowerThreshold",
-            "caption": "Grenzwert für 'Wassertank voll' (Watt)",
+            "caption": "Schwellwert für Tank-Voll-Erkennung (Watt)",
             "digits": 1
         },
         {
