@@ -40,7 +40,9 @@ class BasementClimate extends IPSModule
         
         // Status of Dehumidifier
         $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "");
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), '{"Type":"Label","Format":"%s"}'); // Example for IPS 8 Custom Presentation
+        if (function_exists('IPS_SetVariableCustomPresentation')) {
+            IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), []);
+        }
         
         // Tank Alarm Variable with Action Script to Acknowledge
         $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "~Alert");

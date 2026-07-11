@@ -30,7 +30,9 @@ class GardenHouseClimate extends IPSModule
         $this->SetValue("WinterMode", true); // Default to true
         
         $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "");
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent("HeaterStatus"), '{"Type":"Label","Format":"%s"}');
+        if (function_exists('IPS_SetVariableCustomPresentation')) {
+            IPS_SetVariableCustomPresentation($this->GetIDForIdent("HeaterStatus"), []);
+        }
         
         // Alarms (Require Acknowledge)
         $this->RegisterVariableBoolean("AlarmHeaterDefect", "Alarm: Heizung defekt", "~Alert");
