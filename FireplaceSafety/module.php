@@ -19,7 +19,13 @@ class FireplaceSafety extends IPSModule
         $this->RegisterVariableFloat("CurrentDeltaTemp", "Aktuelle Temperatur-Differenz", "~Temperature");
         $this->RegisterVariableBoolean("CurrentDoorStatus", "Status Ofentür", "~Window");
 
-        $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN' (°C)", "~Temperature");
+        if (!IPS_VariableProfileExists("FS.DeltaTemp")) {
+            IPS_CreateVariableProfile("FS.DeltaTemp", 2); // Float
+            IPS_SetVariableProfileText("FS.DeltaTemp", "", " °C");
+            IPS_SetVariableProfileValues("FS.DeltaTemp", 0, 100, 1);
+            IPS_SetVariableProfileIcon("FS.DeltaTemp", "Temperature");
+        }
+        $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN' (°C)", "FS.DeltaTemp");
         $this->EnableAction("OvenDeltaTemp");
         if ($this->GetValue("OvenDeltaTemp") == 0) {
             $this->SetValue("OvenDeltaTemp", 15.0);
