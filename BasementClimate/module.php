@@ -386,4 +386,12 @@ class BasementClimate extends IPSModule
         $dd = $sdd * ($rh / 100);
         return 100000 * 18.016 / 8314.3 * $dd / ($t + 273.15);
     }
+    
+    private function SetValueIfChanged($Ident, $Value)
+    {
+        $id = $this->GetIDForIdent($Ident);
+        if (GetValue($id) !== $Value) {
+            SetValue($id, $Value);
+        }
+    }
 }
