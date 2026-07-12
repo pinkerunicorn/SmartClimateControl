@@ -213,7 +213,7 @@ class BasementClimate extends IPSModule
                     $details = sprintf("Lüften lohnt nicht (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
                 }
                 // Automatically clear close alarm if window is closed
-                $this->SetValue("AlarmWindowClose", false);
+                $this->SetValueIfChanged("AlarmWindowClose", false);
             } else {
                 if ($absOut >= $absIn) {
                     $closeAlarm = true;
@@ -223,12 +223,12 @@ class BasementClimate extends IPSModule
                 }
                 
                 if ($closeAlarm) {
-                    $this->SetValue("AlarmWindowClose", true);
+                    $this->SetValueIfChanged("AlarmWindowClose", true);
                 }
             }
             
-            $this->SetValue("VentilationRecommendation", $recommendation);
-            $this->SetValue("VentilationDetails", $details);
+            $this->SetValueIfChanged("VentilationRecommendation", $recommendation);
+            $this->SetValueIfChanged("VentilationDetails", $details);
         }
         
         // Heating Logic
@@ -270,7 +270,8 @@ class BasementClimate extends IPSModule
             RequestAction($plugId, $newStatus);
         }
         
-        $this->SetValue("DehumidifierStatus", $statusText);
+        $this->SetValueIfChanged("DehumidifierStatus", $statusText);
+        $this->SetValueIfChanged("AlarmTankFull", $tankFull);
     }
     
     private function ControlHeating($humIn)
