@@ -128,21 +128,13 @@ class FireplaceSafety extends IPSModule
     public function TriggerDoorAlarm()
     {
         $this->SetTimerInterval("DoorAlarmTimer", 0);
-        $this->SetValueIfChangedBool("AlarmOvenDoor", true);
+        $this->SetValueIfChanged("AlarmOvenDoor", true);
         $this->SendDebug("Timer", "Ofentür-Alarm ausgelöst!", 0);
     }
 
-    private function SetValueIfChangedBool(string $Ident, bool $Value)
+    private function SetValueIfChanged(string $Ident, $Value)
     {
         if ($this->GetValue($Ident) !== $Value) {
-            $this->SetValue($Ident, $Value);
-        }
-    }
-
-    private function SetValueIfChangedFloat(string $Ident, float $Value)
-    {
-        // For floats, we allow a tiny epsilon or just strict check
-        if (abs($this->GetValue($Ident) - $Value) > 0.01) {
             $this->SetValue($Ident, $Value);
         }
     }
@@ -159,13 +151,13 @@ class FireplaceSafety extends IPSModule
             $deltaSetting = $this->GetValue("OvenDeltaTemp");
             
             $currentDelta = $tOven - $tRoom;
-            $this->SetValueIfChangedFloat("CurrentDeltaTemp", $currentDelta);
+            $this->SetValueIfChanged("CurrentDeltaTemp", $currentDelta);
             
             if ($currentDelta >= $deltaSetting) {
                 $isOvenOn = true;
             }
         }
-        $this->SetValueIfChangedBool("OvenStatus", $isOvenOn);
+        $this->SetValueIfChanged("OvenStatus", $isOvenOn);
 
         // Check Windows
         $anyWindowOpen = false;
@@ -193,7 +185,7 @@ class FireplaceSafety extends IPSModule
                 $isDoorOpen = true;
             }
         }
-        $this->SetValueIfChangedBool("CurrentDoorStatus", $isDoorOpen);
+        $this->SetValueIfChanged("CurrentDoorStatus", $isDoorOpen);
 
         // Door Alarm Logic
         if ($isOvenOn && $isDoorOpen) {
