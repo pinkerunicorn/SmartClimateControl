@@ -16,7 +16,9 @@ class FireplaceSafety extends IPSModule
         $this->RegisterPropertyString("SensorWindows", "[]");
         $this->RegisterPropertyInteger("ActuatorHood", 0);
 
-        // Variables
+        $this->RegisterVariableFloat("CurrentDeltaTemp", "Aktuelle Temperatur-Differenz", "~Temperature");
+        $this->RegisterVariableBoolean("CurrentDoorStatus", "Status Ofentür", "~Window");
+
         $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN' (°C)", "~Temperature");
         $this->EnableAction("OvenDeltaTemp");
         if ($this->GetValue("OvenDeltaTemp") == 0) {
@@ -133,9 +135,12 @@ class FireplaceSafety extends IPSModule
         if ($ovenTempId > 0 && IPS_VariableExists($ovenTempId) && $roomTempId > 0 && IPS_VariableExists($roomTempId)) {
             $tOven = GetValue($ovenTempId);
             $tRoom = GetValue($roomTempId);
-            $delta = $this->GetValue("OvenDeltaTemp");
+            $deltaSetting = $this->GetValue("OvenDeltaTemp");
             
-            if ($tOven >= ($tRoom + $delta)) {
+            $currentDelta = $tOven - $tRoom;
+            $this->SetValue("CurrentDeltaTemp", $currentDelta);
+            
+            if ($currentDelta >= $deltaSetting) {
                 $isOvenOn = true;
             }
         }
@@ -167,6 +172,7 @@ class FireplaceSafety extends IPSModule
                 $isDoorOpen = true;
             }
         }
+        $this->SetValue("CurrentDoorStatus", $isDoorOpen);
 
         // Door Alarm Logic
         if ($isOvenOn && $isDoorOpen) {
