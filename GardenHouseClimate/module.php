@@ -344,5 +344,107 @@ class GardenHouseClimate extends IPSModuleStrict
         IPS_LogMessage('SmartVillaKunterbunt', 'GardenHouseClimate: ' . $Message);
         return true;
     }
+
+    public function GetConfigurationForm(): string
+    {
+        return <<<'EOT'
+{
+    "elements": [
+        {
+            "type": "Label",
+            "caption": "Sensoren"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "SensorTempInside",
+            "caption": "Temperatur Gartenhaus"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "SensorTempOutside",
+            "caption": "Temperatur Außen"
+        },
+        {
+            "type": "List",
+            "name": "SensorWindows",
+            "caption": "Fenster-/Türkontakte (Gartenhaus)",
+            "add": true,
+            "delete": true,
+            "columns": [
+                {
+                    "caption": "Sensor",
+                    "name": "VariableID",
+                    "width": "auto",
+                    "add": 0,
+                    "edit": {
+                        "type": "SelectVariable"
+                    }
+                },
+                {
+                    "caption": "Wert für Geschlossen",
+                    "name": "ClosedValue",
+                    "width": "150px",
+                    "add": "false",
+                    "edit": {
+                        "type": "ValidationTextBox"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Label",
+            "caption": "Aktoren"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "ActuatorHeaterPlug",
+            "caption": "Schaltsteckdose Heizung"
+        },
+        {
+            "type": "SelectVariable",
+            "name": "SensorHeaterPower",
+            "caption": "Leistungsmessung Heizung (Watt)"
+        },
+        {
+            "type": "Label",
+            "caption": "Temperatureinstellungen"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "Hysteresis",
+            "caption": "Schalthysterese (°C)",
+            "digits": 1
+        },
+        {
+            "type": "Label",
+            "caption": "Ausfallsicherheit / Alarme"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "HeaterPowerThreshold",
+            "caption": "Erwarteter Mindest-Verbrauch bei AN (Watt)",
+            "digits": 1
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "HeaterDefectTime",
+            "caption": "Zeit bis Defekt-Alarm (Sekunden)"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "WindowOpenTime",
+            "caption": "Zeit bis Fenster-offen-Alarm im Winter (Sekunden)"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "FrostWarningTemp",
+            "caption": "Temperatur für kritischen Frost-Alarm (°C)",
+            "digits": 1
+        }
+    ]
 }
+EOT;
+    }
+}
+
 
