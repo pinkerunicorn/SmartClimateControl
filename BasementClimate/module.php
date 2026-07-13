@@ -394,9 +394,10 @@ class BasementClimate extends IPSModule
         }
     }
 
-    protected function LogMessage($Message, $KL_MESSAGE = KL_MESSAGE)
+    protected function LogMessage(string $Message, int $Type): bool
     {
         IPS_LogMessage('SmartVillaKunterbunt', 'BasementClimate: ' . $Message);
+        return true;
     }
 }
 
