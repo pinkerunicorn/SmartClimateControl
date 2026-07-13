@@ -41,12 +41,7 @@ class BasementClimate extends IPSModuleStrict
         $this->RegisterVariableFloat("CurrentHumidity", "Aktuelle Luftfeuchtigkeit", "~Humidity.F");
         
         // Custom profile for thresholds (5% steps)
-        if (!IPS_VariableProfileExists("BC.HumThreshold")) {
-            IPS_CreateVariableProfile("BC.HumThreshold", 2);
-            IPS_SetVariableProfileText("BC.HumThreshold", "", " %");
-            IPS_SetVariableProfileValues("BC.HumThreshold", 30, 90, 5);
-            IPS_SetVariableProfileIcon("BC.HumThreshold", "Humidity");
-        }
+        
         
         $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "BC.HumThreshold");
         $this->EnableAction("DehumidifierMaxHum");
@@ -55,16 +50,25 @@ class BasementClimate extends IPSModuleStrict
         $this->EnableAction("DehumidifierMinHum");
         
         // Status of Dehumidifier
-        if (!IPS_VariableProfileExists("BC.DehumidifierStatus")) {
-            IPS_CreateVariableProfile("BC.DehumidifierStatus", 1);
-            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 0, "Aus", "Sleep", 0x00FF00);
-            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 1, "Entfeuchten", "Drops", 0x0000FF);
-            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 2, "Pausiert (Fenster offen)", "Window", 0xFFFF00);
-            IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 3, "Pausiert (Tank voll)", "Warning", 0xFF0000);
-        }
+        
         $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
         
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), []);
+                IPS_SetVariableCustomPresentation($this->GetIDForIdent("HumidityThreshold"), [
+            'MIN' => 30.0,
+            'MAX' => 80.0,
+            'STEP' => 1.0,
+            'SUFFIX' => ' %',
+            'ICON' => 'Drops'
+        ]);
+
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), [
+            'ASSOCIATIONS' => [
+                ['VALUE' => 0, 'NAME' => 'Aus', 'ICON' => 'Sleep', 'COLOR' => 0x00FF00],
+                ['VALUE' => 1, 'NAME' => 'Entfeuchten', 'ICON' => 'Drops', 'COLOR' => 0x0000FF],
+                ['VALUE' => 2, 'NAME' => 'Pausiert (Fenster offen)', 'ICON' => 'Window', 'COLOR' => 0xFFFF00],
+                ['VALUE' => 3, 'NAME' => 'Pausiert (Tank voll)', 'ICON' => 'Warning', 'COLOR' => 0xFF0000]
+            ]
+        ]);
         
         // Tank Alarm Variable with Action Script to Acknowledge
         $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "~Alert");

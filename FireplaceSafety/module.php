@@ -18,42 +18,24 @@ class FireplaceSafety extends IPSModuleStrict
         $this->RegisterVariableFloat("CurrentDeltaTemp", "Aktuelle Temperatur-Differenz", "~Temperature");
         $this->RegisterVariableBoolean("CurrentDoorStatus", "Status Ofentür", "~Window");
 
-        if (!IPS_VariableProfileExists("FS.DeltaTemp")) {
-            IPS_CreateVariableProfile("FS.DeltaTemp", 2); // Float
-            IPS_SetVariableProfileText("FS.DeltaTemp", "", " °C");
-            IPS_SetVariableProfileValues("FS.DeltaTemp", 0, 100, 1);
-            IPS_SetVariableProfileIcon("FS.DeltaTemp", "Temperature");
-        }
+        
         $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN' (°C)", "FS.DeltaTemp");
         $this->EnableAction("OvenDeltaTemp");
         if ($this->GetValue("OvenDeltaTemp") == 0) {
             $this->SetValue("OvenDeltaTemp", 15.0);
         }
 
-        if (!IPS_VariableProfileExists("FS.AlarmTime")) {
-            IPS_CreateVariableProfile("FS.AlarmTime", 1); // Integer
-            IPS_SetVariableProfileText("FS.AlarmTime", "", " s");
-            IPS_SetVariableProfileValues("FS.AlarmTime", 10, 3600, 10);
-            IPS_SetVariableProfileIcon("FS.AlarmTime", "Clock");
-        }
+        
         $this->RegisterVariableInteger("DoorAlarmTime", "Vorwarnzeit Ofentür offen", "FS.AlarmTime");
         $this->EnableAction("DoorAlarmTime");
         if ($this->GetValue("DoorAlarmTime") == 0) {
             $this->SetValue("DoorAlarmTime", 300);
         }
 
-        if (!IPS_VariableProfileExists("FS.OvenStatus")) {
-            IPS_CreateVariableProfile("FS.OvenStatus", 0); // Boolean
-            IPS_SetVariableProfileAssociation("FS.OvenStatus", false, "Aus", "Flame", -1);
-            IPS_SetVariableProfileAssociation("FS.OvenStatus", true, "Brennt", "Flame", 0xFF0000);
-        }
+        
         $this->RegisterVariableBoolean("OvenStatus", "Status Kaminofen", "FS.OvenStatus");
 
-        if (!IPS_VariableProfileExists("FS.HoodStatus")) {
-            IPS_CreateVariableProfile("FS.HoodStatus", 0); // Boolean
-            IPS_SetVariableProfileAssociation("FS.HoodStatus", false, "Gesperrt (Unterdruck)", "Lock", 0xFF0000);
-            IPS_SetVariableProfileAssociation("FS.HoodStatus", true, "Freigegeben", "Unlock", 0x00FF00);
-        }
+        
         $this->RegisterVariableBoolean("HoodStatus", "Status Dunstabzugshaube", "FS.HoodStatus");
 
         $this->RegisterVariableBoolean("AlarmOvenDoor", "Alarm Ofentür", "~Alert");
@@ -65,6 +47,37 @@ class FireplaceSafety extends IPSModuleStrict
 
     public function ApplyChanges(): void{
         parent::ApplyChanges();
+
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("DeltaTemp"), [
+            'MIN' => 0.0,
+            'MAX' => 100.0,
+            'STEP' => 1.0,
+            'SUFFIX' => ' °C',
+            'ICON' => 'Temperature'
+        ]);
+
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("AlarmTimeMinutes"), [
+            'MIN' => 1,
+            'MAX' => 60,
+            'STEP' => 1,
+            'SUFFIX' => ' Min',
+            'ICON' => 'Clock'
+        ]);
+
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("OvenStatus"), [
+            'ASSOCIATIONS' => [
+                ['VALUE' => false, 'NAME' => 'Aus', 'ICON' => 'Flame', 'COLOR' => -1],
+                ['VALUE' => true, 'NAME' => 'Brennt', 'ICON' => 'Flame', 'COLOR' => 0xFF0000]
+            ]
+        ]);
+
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("HoodStatus"), [
+            'ASSOCIATIONS' => [
+                ['VALUE' => false, 'NAME' => 'Gesperrt (Unterdruck)', 'ICON' => 'Lock', 'COLOR' => 0xFF0000],
+                ['VALUE' => true, 'NAME' => 'Freigegeben', 'ICON' => 'Unlock', 'COLOR' => 0x00FF00]
+            ]
+        ]);
+
 
         // Clear all previous message registrations
         foreach ($this->GetMessageList() as $senderID => $messages) {
