@@ -54,19 +54,19 @@ class BasementClimate extends IPSModuleStrict
         $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
         
                 IPS_SetVariableCustomPresentation($this->GetIDForIdent("HumidityThreshold"), [
-            'MIN' => 30.0,
-            'MAX' => 80.0,
-            'STEP' => 1.0,
-            'SUFFIX' => ' %',
-            'ICON' => 'Drops'
+            'Min' => 30.0,
+            'Max' => 80.0,
+            'Step' => 1.0,
+            'Suffix' => ' %',
+            'Icon' => 'Drops'
         ]);
 
         IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), [
-            'ASSOCIATIONS' => [
-                ['VALUE' => 0, 'NAME' => 'Aus', 'ICON' => 'Sleep', 'COLOR' => 0x00FF00],
-                ['VALUE' => 1, 'NAME' => 'Entfeuchten', 'ICON' => 'Drops', 'COLOR' => 0x0000FF],
-                ['VALUE' => 2, 'NAME' => 'Pausiert (Fenster offen)', 'ICON' => 'Window', 'COLOR' => 0xFFFF00],
-                ['VALUE' => 3, 'NAME' => 'Pausiert (Tank voll)', 'ICON' => 'Warning', 'COLOR' => 0xFF0000]
+            'Associations' => [
+                ['Value' => 0, 'Name' => 'Aus', 'Icon' => 'Sleep', 'Color' => 0x00FF00],
+                ['Value' => 1, 'Name' => 'Entfeuchten', 'Icon' => 'Drops', 'Color' => 0x0000FF],
+                ['Value' => 2, 'Name' => 'Pausiert (Fenster offen)', 'Icon' => 'Window', 'Color' => 0xFFFF00],
+                ['Value' => 3, 'Name' => 'Pausiert (Tank voll)', 'Icon' => 'Warning', 'Color' => 0xFF0000]
             ]
         ]);
         

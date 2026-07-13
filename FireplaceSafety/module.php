@@ -49,32 +49,32 @@ class FireplaceSafety extends IPSModuleStrict
         parent::ApplyChanges();
 
         IPS_SetVariableCustomPresentation($this->GetIDForIdent("DeltaTemp"), [
-            'MIN' => 0.0,
-            'MAX' => 100.0,
-            'STEP' => 1.0,
-            'SUFFIX' => ' °C',
-            'ICON' => 'Temperature'
+            'Min' => 0.0,
+            'Max' => 100.0,
+            'Step' => 1.0,
+            'Suffix' => ' °C',
+            'Icon' => 'Temperature'
         ]);
 
         IPS_SetVariableCustomPresentation($this->GetIDForIdent("AlarmTimeMinutes"), [
-            'MIN' => 1,
-            'MAX' => 60,
-            'STEP' => 1,
-            'SUFFIX' => ' Min',
-            'ICON' => 'Clock'
+            'Min' => 1,
+            'Max' => 60,
+            'Step' => 1,
+            'Suffix' => ' Min',
+            'Icon' => 'Clock'
         ]);
 
         IPS_SetVariableCustomPresentation($this->GetIDForIdent("OvenStatus"), [
-            'ASSOCIATIONS' => [
-                ['VALUE' => false, 'NAME' => 'Aus', 'ICON' => 'Flame', 'COLOR' => -1],
-                ['VALUE' => true, 'NAME' => 'Brennt', 'ICON' => 'Flame', 'COLOR' => 0xFF0000]
+            'Associations' => [
+                ['Value' => false, 'Name' => 'Aus', 'Icon' => 'Flame', 'Color' => -1],
+                ['Value' => true, 'Name' => 'Brennt', 'Icon' => 'Flame', 'Color' => 0xFF0000]
             ]
         ]);
 
         IPS_SetVariableCustomPresentation($this->GetIDForIdent("HoodStatus"), [
-            'ASSOCIATIONS' => [
-                ['VALUE' => false, 'NAME' => 'Gesperrt (Unterdruck)', 'ICON' => 'Lock', 'COLOR' => 0xFF0000],
-                ['VALUE' => true, 'NAME' => 'Freigegeben', 'ICON' => 'Unlock', 'COLOR' => 0x00FF00]
+            'Associations' => [
+                ['Value' => false, 'Name' => 'Gesperrt (Unterdruck)', 'Icon' => 'Lock', 'Color' => 0xFF0000],
+                ['Value' => true, 'Name' => 'Freigegeben', 'Icon' => 'Unlock', 'Color' => 0x00FF00]
             ]
         ]);
 

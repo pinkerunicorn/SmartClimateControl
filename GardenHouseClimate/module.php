@@ -35,10 +35,10 @@ class GardenHouseClimate extends IPSModuleStrict
         $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "GHC.HeaterStatus");
         
                 IPS_SetVariableCustomPresentation($this->GetIDForIdent("HeaterStatus"), [
-            'ASSOCIATIONS' => [
-                ['VALUE' => 0, 'NAME' => 'Aus', 'ICON' => 'Sleep', 'COLOR' => 0x00FF00],
-                ['VALUE' => 1, 'NAME' => 'Heizen', 'ICON' => 'Flame', 'COLOR' => 0xFF0000],
-                ['VALUE' => 2, 'NAME' => 'Pausiert (Fenster offen)', 'ICON' => 'Window', 'COLOR' => 0xFFFF00]
+            'Associations' => [
+                ['Value' => 0, 'Name' => 'Aus', 'Icon' => 'Sleep', 'Color' => 0x00FF00],
+                ['Value' => 1, 'Name' => 'Heizen', 'Icon' => 'Flame', 'Color' => 0xFF0000],
+                ['Value' => 2, 'Name' => 'Pausiert (Fenster offen)', 'Icon' => 'Window', 'Color' => 0xFFFF00]
             ]
         ]);
         
