@@ -316,14 +316,14 @@ class BasementClimate extends IPSModuleStrict
         if ($rad1 > 0 && IPS_VariableExists($rad1)) {
             $currentRad1 = GetValue($rad1);
             if ($currentRad1 != $targetTemp) {
-                RequestAction($rad1, $targetTemp);
+                @RequestAction($rad1, $targetTemp);
             }
         }
         
         if ($rad2 > 0 && IPS_VariableExists($rad2)) {
             $currentRad2 = GetValue($rad2);
             if ($currentRad2 != $targetTemp) {
-                RequestAction($rad2, $targetTemp);
+                @RequestAction($rad2, $targetTemp);
             }
         }
     }
