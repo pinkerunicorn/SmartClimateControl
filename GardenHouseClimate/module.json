@@ -10,7 +10,7 @@
     "childRequirements": [],
     "implemented": [],
     "prefix": "GHC",
-    "url": "https://github.com/floriangrassinger/SmartClimateControl",
+    "url": "https://github.com/pinkerunicorn/",
     "author": "Florian Graßinger",
     "properties": {
         "SensorTempInside": {
@@ -39,7 +39,7 @@
         },
         "HeaterPowerThreshold": {
             "type": "float",
-            "default": 50.0
+            "default": 50
         },
         "HeaterDefectTime": {
             "type": "integer",
@@ -51,7 +51,7 @@
         },
         "FrostWarningTemp": {
             "type": "float",
-            "default": 3.0
+            "default": 3
         }
     }
 }

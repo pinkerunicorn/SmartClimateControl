@@ -10,7 +10,7 @@
     "childRequirements": [],
     "implemented": [],
     "prefix": "BC",
-    "url": "https://github.com/floriangrassinger/SmartClimateControl",
+    "url": "https://github.com/pinkerunicorn/",
     "author": "Florian Graßinger",
     "properties": {
         "SensorTempOutside": {
@@ -51,7 +51,7 @@
         },
         "DehumidifierPowerThreshold": {
             "type": "float",
-            "default": 10.0
+            "default": 10
         },
         "DehumidifierPowerTime": {
             "type": "integer",
@@ -59,7 +59,7 @@
         },
         "TargetTemperature": {
             "type": "float",
-            "default": 18.0
+            "default": 18
         },
         "VentilationThreshold": {
             "type": "float",

@@ -221,7 +221,11 @@ class FireplaceSafety extends IPSModule
             
             if ($currentPlugBool !== $allowHood) {
                 $this->SendDebug("Actuator", "Schalte Dunstabzugshaube: " . ($allowHood ? "AN" : "AUS"), 0);
-                @RequestAction($actuatorId, $allowHood);
+                try {
+                    RequestAction($actuatorId, $allowHood);
+                } catch (\Throwable $e) {
+                    $this->LogMessage("Fehler beim Schalten der Dunstabzugshaube (ID $actuatorId): " . $e->getMessage(), KL_ERROR);
+                }
             }
         }
     }
