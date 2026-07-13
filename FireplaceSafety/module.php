@@ -245,10 +245,9 @@ class FireplaceSafety extends IPSModule
         return (string)$currentVal === $triggerValStr;
     }
 
-    protected function LogMessage(string $Message, int $Type): bool
+    protected function LogMessage($Message, $Type)
     {
         IPS_LogMessage('SmartVillaKunterbunt', 'FireplaceSafety: ' . $Message);
-        return true;
     }
 }
 
