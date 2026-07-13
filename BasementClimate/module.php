@@ -75,6 +75,42 @@ class BasementClimate extends IPSModuleStrict
 
     public function ApplyChanges(): void{
         parent::ApplyChanges();
+        // --- Auto-generated References ---
+        $ref_SensorTempOutside = $this->ReadPropertyInteger('SensorTempOutside');
+        if ($ref_SensorTempOutside > 1 && @IPS_ObjectExists($ref_SensorTempOutside)) {
+            $this->RegisterReference($ref_SensorTempOutside);
+        }
+        $ref_SensorHumOutside = $this->ReadPropertyInteger('SensorHumOutside');
+        if ($ref_SensorHumOutside > 1 && @IPS_ObjectExists($ref_SensorHumOutside)) {
+            $this->RegisterReference($ref_SensorHumOutside);
+        }
+        $ref_SensorTempInside = $this->ReadPropertyInteger('SensorTempInside');
+        if ($ref_SensorTempInside > 1 && @IPS_ObjectExists($ref_SensorTempInside)) {
+            $this->RegisterReference($ref_SensorTempInside);
+        }
+        $ref_SensorHumInside = $this->ReadPropertyInteger('SensorHumInside');
+        if ($ref_SensorHumInside > 1 && @IPS_ObjectExists($ref_SensorHumInside)) {
+            $this->RegisterReference($ref_SensorHumInside);
+        }
+        $ref_ActuatorDehumidifierPlug = $this->ReadPropertyInteger('ActuatorDehumidifierPlug');
+        if ($ref_ActuatorDehumidifierPlug > 1 && @IPS_ObjectExists($ref_ActuatorDehumidifierPlug)) {
+            $this->RegisterReference($ref_ActuatorDehumidifierPlug);
+        }
+        $ref_SensorDehumidifierPower = $this->ReadPropertyInteger('SensorDehumidifierPower');
+        if ($ref_SensorDehumidifierPower > 1 && @IPS_ObjectExists($ref_SensorDehumidifierPower)) {
+            $this->RegisterReference($ref_SensorDehumidifierPower);
+        }
+        $ref_ActuatorRadiator1 = $this->ReadPropertyInteger('ActuatorRadiator1');
+        if ($ref_ActuatorRadiator1 > 1 && @IPS_ObjectExists($ref_ActuatorRadiator1)) {
+            $this->RegisterReference($ref_ActuatorRadiator1);
+        }
+        $ref_ActuatorRadiator2 = $this->ReadPropertyInteger('ActuatorRadiator2');
+        if ($ref_ActuatorRadiator2 > 1 && @IPS_ObjectExists($ref_ActuatorRadiator2)) {
+            $this->RegisterReference($ref_ActuatorRadiator2);
+        }
+        // ---------------------------------
+
+
         
         // Unregister all messages first
         foreach ($this->GetMessageList() as $senderID => $messages) {

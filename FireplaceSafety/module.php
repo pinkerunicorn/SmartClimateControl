@@ -47,6 +47,26 @@ class FireplaceSafety extends IPSModuleStrict
 
     public function ApplyChanges(): void{
         parent::ApplyChanges();
+        // --- Auto-generated References ---
+        $ref_SensorOvenTemp = $this->ReadPropertyInteger('SensorOvenTemp');
+        if ($ref_SensorOvenTemp > 1 && @IPS_ObjectExists($ref_SensorOvenTemp)) {
+            $this->RegisterReference($ref_SensorOvenTemp);
+        }
+        $ref_SensorRoomTemp = $this->ReadPropertyInteger('SensorRoomTemp');
+        if ($ref_SensorRoomTemp > 1 && @IPS_ObjectExists($ref_SensorRoomTemp)) {
+            $this->RegisterReference($ref_SensorRoomTemp);
+        }
+        $ref_SensorOvenDoor = $this->ReadPropertyInteger('SensorOvenDoor');
+        if ($ref_SensorOvenDoor > 1 && @IPS_ObjectExists($ref_SensorOvenDoor)) {
+            $this->RegisterReference($ref_SensorOvenDoor);
+        }
+        $ref_ActuatorHood = $this->ReadPropertyInteger('ActuatorHood');
+        if ($ref_ActuatorHood > 1 && @IPS_ObjectExists($ref_ActuatorHood)) {
+            $this->RegisterReference($ref_ActuatorHood);
+        }
+        // ---------------------------------
+
+
 
         if (!IPS_VariableProfileExists('SmartClimate.OvenStatus')) {
             IPS_CreateVariableProfile('SmartClimate.OvenStatus', 0); // Boolean

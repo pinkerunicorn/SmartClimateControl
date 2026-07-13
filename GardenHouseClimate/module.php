@@ -59,6 +59,30 @@ class GardenHouseClimate extends IPSModuleStrict
 
     public function ApplyChanges(): void{
         parent::ApplyChanges();
+        // --- Auto-generated References ---
+        $ref_SensorTempInside = $this->ReadPropertyInteger('SensorTempInside');
+        if ($ref_SensorTempInside > 1 && @IPS_ObjectExists($ref_SensorTempInside)) {
+            $this->RegisterReference($ref_SensorTempInside);
+        }
+        $ref_SensorTempOutside = $this->ReadPropertyInteger('SensorTempOutside');
+        if ($ref_SensorTempOutside > 1 && @IPS_ObjectExists($ref_SensorTempOutside)) {
+            $this->RegisterReference($ref_SensorTempOutside);
+        }
+        $ref_ActuatorHeaterPlug = $this->ReadPropertyInteger('ActuatorHeaterPlug');
+        if ($ref_ActuatorHeaterPlug > 1 && @IPS_ObjectExists($ref_ActuatorHeaterPlug)) {
+            $this->RegisterReference($ref_ActuatorHeaterPlug);
+        }
+        $ref_SensorHeaterPower = $this->ReadPropertyInteger('SensorHeaterPower');
+        if ($ref_SensorHeaterPower > 1 && @IPS_ObjectExists($ref_SensorHeaterPower)) {
+            $this->RegisterReference($ref_SensorHeaterPower);
+        }
+        $ref_WindowOpenTime = $this->ReadPropertyInteger('WindowOpenTime');
+        if ($ref_WindowOpenTime > 1 && @IPS_ObjectExists($ref_WindowOpenTime)) {
+            $this->RegisterReference($ref_WindowOpenTime);
+        }
+        // ---------------------------------
+
+
         
         foreach ($this->GetMessageList() as $senderID => $messages) {
             foreach ($messages as $message) {
