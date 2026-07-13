@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-class BasementClimate extends IPSModule
+class BasementClimate extends IPSModuleStrict
 {
-    public function Create()
-    {
+    public function Create(): void{
         parent::Create();
 
         // Properties
@@ -78,8 +77,7 @@ class BasementClimate extends IPSModule
         $this->RegisterTimer("PowerCheckTimer", 0, 'BC_CheckPowerThreshold($_IPS[\'TARGET\']);');
     }
 
-    public function ApplyChanges()
-    {
+    public function ApplyChanges(): void{
         parent::ApplyChanges();
         
         // Unregister all messages first
@@ -123,8 +121,7 @@ class BasementClimate extends IPSModule
         $this->UpdateClimate();
     }
     
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
-    {
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void{
         $powerId = $this->ReadPropertyInteger("SensorDehumidifierPower");
         
         if ($SenderID == $powerId) {
@@ -134,8 +131,7 @@ class BasementClimate extends IPSModule
         }
     }
     
-    public function RequestAction($Ident, $Value)
-    {
+    public function RequestAction(string $Ident, $Value): void{
         switch ($Ident) {
             case "AlarmTankFull":
             case "AlarmWindowClose":
@@ -394,9 +390,10 @@ class BasementClimate extends IPSModule
         }
     }
 
-    protected function LogMessage($Message, $Type)
+    protected function LogMessage(string $Message, int $Type): bool
     {
         IPS_LogMessage('SmartVillaKunterbunt', 'BasementClimate: ' . $Message);
+        return true;
     }
 }
 

@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-class GardenHouseClimate extends IPSModule
+class GardenHouseClimate extends IPSModuleStrict
 {
-    public function Create()
-    {
+    public function Create(): void{
         parent::Create();
 
         // Properties
@@ -57,8 +56,7 @@ class GardenHouseClimate extends IPSModule
         $this->RegisterTimer("WindowOpenTimer", 0, 'GHC_TriggerWindowOpenAlarm($_IPS[\'TARGET\']);');
     }
 
-    public function ApplyChanges()
-    {
+    public function ApplyChanges(): void{
         parent::ApplyChanges();
         
         foreach ($this->GetMessageList() as $senderID => $messages) {
@@ -96,8 +94,7 @@ class GardenHouseClimate extends IPSModule
         $this->UpdateClimate();
     }
     
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
-    {
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void{
         $powerId = $this->ReadPropertyInteger("SensorHeaterPower");
         $isWindow = false;
         
@@ -135,8 +132,7 @@ class GardenHouseClimate extends IPSModule
         }
     }
     
-    public function RequestAction($Ident, $Value)
-    {
+    public function RequestAction(string $Ident, $Value): void{
         switch ($Ident) {
             case "TargetTemperature":
                 $this->SetValue($Ident, $Value);
@@ -318,9 +314,10 @@ class GardenHouseClimate extends IPSModule
         return !$isClosed;
     }
 
-    protected function LogMessage($Message, $Type)
+    protected function LogMessage(string $Message, int $Type): bool
     {
         IPS_LogMessage('SmartVillaKunterbunt', 'GardenHouseClimate: ' . $Message);
+        return true;
     }
 }
 

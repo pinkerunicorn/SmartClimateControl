@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-class FireplaceSafety extends IPSModule
+class FireplaceSafety extends IPSModuleStrict
 {
-    public function Create()
-    {
+    public function Create(): void{
         parent::Create();
 
         // Properties
@@ -64,8 +63,7 @@ class FireplaceSafety extends IPSModule
         $this->RegisterTimer("DoorAlarmTimer", 0, 'FS_TriggerDoorAlarm($_IPS[\'TARGET\']);');
     }
 
-    public function ApplyChanges()
-    {
+    public function ApplyChanges(): void{
         parent::ApplyChanges();
 
         // Clear all previous message registrations
@@ -101,13 +99,11 @@ class FireplaceSafety extends IPSModule
         $this->UpdateSafety();
     }
 
-    public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
-    {
+    public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void{
         $this->UpdateSafety();
     }
 
-    public function RequestAction($Ident, $Value)
-    {
+    public function RequestAction(string $Ident, $Value): void{
         switch ($Ident) {
             case "OvenDeltaTemp":
             case "DoorAlarmTime":
@@ -245,9 +241,10 @@ class FireplaceSafety extends IPSModule
         return (string)$currentVal === $triggerValStr;
     }
 
-    protected function LogMessage($Message, $Type)
+    protected function LogMessage(string $Message, int $Type): bool
     {
         IPS_LogMessage('SmartVillaKunterbunt', 'FireplaceSafety: ' . $Message);
+        return true;
     }
 }
 
