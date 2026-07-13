@@ -351,18 +351,25 @@ class GardenHouseClimate extends IPSModuleStrict
 {
     "elements": [
         {
-            "type": "Label",
-            "caption": "Sensoren"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorTempInside",
-            "caption": "Temperatur Gartenhaus"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorTempOutside",
-            "caption": "Temperatur Außen"
+            "type": "ExpansionPanel",
+            "caption": "⚙️ Sensoren",
+            "items": [
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorTempInside",
+                            "caption": "Temperatur Gartenhaus"
+                        },
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorTempOutside",
+                            "caption": "Temperatur Außen"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "type": "List",

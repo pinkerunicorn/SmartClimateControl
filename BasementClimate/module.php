@@ -434,32 +434,44 @@ class BasementClimate extends IPSModuleStrict
 {
     "elements": [
         {
-            "type": "Label",
-            "caption": "Sensoren (Außen)"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorTempOutside",
-            "caption": "Temperatur Außen"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorHumOutside",
-            "caption": "Feuchtigkeit Außen"
-        },
-        {
-            "type": "Label",
-            "caption": "Sensoren (Innen/Keller)"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorTempInside",
-            "caption": "Temperatur Keller"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorHumInside",
-            "caption": "Feuchtigkeit Keller"
+            "type": "ExpansionPanel",
+            "caption": "⚙️ Sensoren (Außen)",
+            "items": [
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorTempOutside",
+                            "caption": "Temperatur Außen"
+                        },
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorHumOutside",
+                            "caption": "Feuchtigkeit Außen"
+                        }
+                    ]
+                },
+                {
+                    "type": "Label",
+                    "caption": "Sensoren (Innen/Keller)"
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorTempInside",
+                            "caption": "Temperatur Keller"
+                        },
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorHumInside",
+                            "caption": "Feuchtigkeit Keller"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "type": "List",

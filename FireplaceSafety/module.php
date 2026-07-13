@@ -270,28 +270,40 @@ class FireplaceSafety extends IPSModuleStrict
 {
     "elements": [
         {
-            "type": "Label",
-            "caption": "Sensoren (Eingänge)"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorOvenTemp",
-            "caption": "Temperatur Ofen / Abgasrohr"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorRoomTemp",
-            "caption": "Temperatur Raum"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "SensorOvenDoor",
-            "caption": "Ofentür-Kontakt"
-        },
-        {
-            "type": "ValidationTextBox",
-            "name": "OvenDoorClosedValue",
-            "caption": "Ofentür-Kontakt: Wert für 'Geschlossen' (z.B. false, 0, geschlossen)"
+            "type": "ExpansionPanel",
+            "caption": "⚙️ Sensoren (Eingänge)",
+            "items": [
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorOvenTemp",
+                            "caption": "Temperatur Ofen / Abgasrohr"
+                        },
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorRoomTemp",
+                            "caption": "Temperatur Raum"
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "SelectVariable",
+                            "name": "SensorOvenDoor",
+                            "caption": "Ofentür-Kontakt"
+                        },
+                        {
+                            "type": "ValidationTextBox",
+                            "name": "OvenDoorClosedValue",
+                            "caption": "Ofentür-Kontakt: Wert für 'Geschlossen' (z.B. false, 0, geschlossen)"
+                        }
+                    ]
+                }
+            ]
         },
         {
             "type": "List",
