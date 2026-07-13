@@ -317,4 +317,10 @@ class GardenHouseClimate extends IPSModule
         
         return !$isClosed;
     }
+
+    protected function LogMessage($Message, $KL_MESSAGE = KL_MESSAGE)
+    {
+        IPS_LogMessage('SmartVillaKunterbunt', 'GardenHouseClimate: ' . $Message);
+    }
 }
+
