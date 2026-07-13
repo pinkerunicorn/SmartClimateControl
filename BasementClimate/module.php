@@ -64,9 +64,8 @@ class BasementClimate extends IPSModule
             IPS_SetVariableProfileAssociation("BC.DehumidifierStatus", 3, "Pausiert (Tank voll)", "Warning", 0xFF0000);
         }
         $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
-        if (function_exists('IPS_SetVariableCustomPresentation')) {
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), []);
-        }
+        
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), []);
         
         // Tank Alarm Variable with Action Script to Acknowledge
         $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "~Alert");

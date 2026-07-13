@@ -39,9 +39,8 @@ class GardenHouseClimate extends IPSModule
             IPS_SetVariableProfileAssociation("GHC.HeaterStatus", 2, "Pausiert (Fenster offen)", "Window", 0xFFFF00);
         }
         $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "GHC.HeaterStatus");
-        if (function_exists('IPS_SetVariableCustomPresentation')) {
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent("HeaterStatus"), []);
-        }
+        
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent("HeaterStatus"), []);
         
         // Alarms (Require Acknowledge)
         $this->RegisterVariableBoolean("AlarmHeaterDefect", "Alarm: Heizung defekt", "~Alert");
