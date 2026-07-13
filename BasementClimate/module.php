@@ -53,22 +53,14 @@ class BasementClimate extends IPSModuleStrict
         
         $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
         
-                IPS_SetVariableCustomPresentation($this->GetIDForIdent("HumidityThreshold"), [
-            'Min' => 30.0,
-            'Max' => 80.0,
-            'Step' => 1.0,
-            'Suffix' => ' %',
-            'Icon' => 'Drops'
-        ]);
-
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent("DehumidifierStatus"), [
-            'Associations' => [
-                ['Value' => 0, 'Name' => 'Aus', 'Icon' => 'Sleep', 'Color' => 0x00FF00],
-                ['Value' => 1, 'Name' => 'Entfeuchten', 'Icon' => 'Drops', 'Color' => 0x0000FF],
-                ['Value' => 2, 'Name' => 'Pausiert (Fenster offen)', 'Icon' => 'Window', 'Color' => 0xFFFF00],
-                ['Value' => 3, 'Name' => 'Pausiert (Tank voll)', 'Icon' => 'Warning', 'Color' => 0xFF0000]
-            ]
-        ]);
+        if (!IPS_VariableProfileExists('SmartClimate.DehumidifierStatus')) {
+            IPS_CreateVariableProfile('SmartClimate.DehumidifierStatus', 1);
+            IPS_SetVariableProfileAssociation('SmartClimate.DehumidifierStatus', 0, 'Aus', 'Sleep', 0x00FF00);
+            IPS_SetVariableProfileAssociation('SmartClimate.DehumidifierStatus', 1, 'Entfeuchten', 'Drops', 0x0000FF);
+            IPS_SetVariableProfileAssociation('SmartClimate.DehumidifierStatus', 2, 'Pausiert (Fenster offen)', 'Window', 0xFFFF00);
+            IPS_SetVariableProfileAssociation('SmartClimate.DehumidifierStatus', 3, 'Pausiert (Tank voll)', 'Warning', 0xFF0000);
+        }
+        IPS_SetVariableCustomProfile($this->GetIDForIdent('DehumidifierStatus'), 'SmartClimate.DehumidifierStatus');
         
         // Tank Alarm Variable with Action Script to Acknowledge
         $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "~Alert");
