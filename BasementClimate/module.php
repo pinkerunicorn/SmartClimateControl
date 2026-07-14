@@ -244,7 +244,7 @@ class BasementClimate extends IPSModuleStrict
             } else {
                 if ($absOut >= $absIn) {
                     $closeAlarm = true;
-                    $details = sprintf("⚠️ Fenster SCHLIESSEN! Außen wird es feuchter (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                    $details = sprintf("Fenster SCHLIESSEN! Außen wird es feuchter (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
                 } else {
                     $details = sprintf("Lüften trocknet weiterhin (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
                 }
@@ -380,7 +380,7 @@ class BasementClimate extends IPSModuleStrict
         $isClosed = false;
         
         if (is_bool($currentVal)) {
-            $targetBool = ($closedValue === 'true' || $closedValue === '1' || strtolower((string)$closedValue) === 'wahr');
+            $targetBool = ($closedValue === 'true'|| $closedValue === '1'|| strtolower((string)$closedValue) === 'wahr');
             $isClosed = ($currentVal === $targetBool);
         } else {
             $isClosed = ((string)$currentVal === (string)$closedValue);
@@ -424,7 +424,7 @@ class BasementClimate extends IPSModuleStrict
 
     protected function LogMessage(string $Message, int $Type): bool
     {
-        IPS_LogMessage('SmartVillaKunterbunt', 'BasementClimate: ' . $Message);
+        IPS_LogMessage('SmartVillaKunterbunt', 'BasementClimate: '. $Message);
         return true;
     }
 
@@ -435,7 +435,7 @@ class BasementClimate extends IPSModuleStrict
     "elements": [
         {
             "type": "ExpansionPanel",
-            "caption": "⚙️ Sensoren (Außen)",
+            "caption": "⚙ Sensoren (Außen)",
             "items": [
                 {
                     "type": "RowLayout",

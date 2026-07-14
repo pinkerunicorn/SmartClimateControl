@@ -330,7 +330,7 @@ class GardenHouseClimate extends IPSModuleStrict
         $isClosed = false;
         
         if (is_bool($currentVal)) {
-            $targetBool = ($closedValue === 'true' || $closedValue === '1' || strtolower((string)$closedValue) === 'wahr');
+            $targetBool = ($closedValue === 'true'|| $closedValue === '1'|| strtolower((string)$closedValue) === 'wahr');
             $isClosed = ($currentVal === $targetBool);
         } else {
             $isClosed = ((string)$currentVal === (string)$closedValue);
@@ -341,7 +341,7 @@ class GardenHouseClimate extends IPSModuleStrict
 
     protected function LogMessage(string $Message, int $Type): bool
     {
-        IPS_LogMessage('SmartVillaKunterbunt', 'GardenHouseClimate: ' . $Message);
+        IPS_LogMessage('SmartVillaKunterbunt', 'GardenHouseClimate: '. $Message);
         return true;
     }
 
@@ -352,7 +352,7 @@ class GardenHouseClimate extends IPSModuleStrict
     "elements": [
         {
             "type": "ExpansionPanel",
-            "caption": "⚙️ Sensoren",
+            "caption": "⚙ Sensoren",
             "items": [
                 {
                     "type": "RowLayout",

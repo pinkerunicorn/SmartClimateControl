@@ -19,7 +19,7 @@ class FireplaceSafety extends IPSModuleStrict
         $this->RegisterVariableBoolean("CurrentDoorStatus", "Status Ofentür", "~Window");
 
         
-        $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN' (°C)", "FS.DeltaTemp");
+        $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN'(°C)", "FS.DeltaTemp");
         $this->EnableAction("OvenDeltaTemp");
         if ($this->GetValue("OvenDeltaTemp") == 0) {
             $this->SetValue("OvenDeltaTemp", 15.0);
@@ -233,11 +233,11 @@ class FireplaceSafety extends IPSModuleStrict
             $currentPlugBool = (bool)$currentPlug;
             
             if ($currentPlugBool !== $allowHood) {
-                $this->SendDebug("Actuator", "Schalte Dunstabzugshaube: " . ($allowHood ? "AN" : "AUS"), 0);
+                $this->SendDebug("Actuator", "Schalte Dunstabzugshaube: ". ($allowHood ? "AN": "AUS"), 0);
                 try {
                     RequestAction($actuatorId, $allowHood);
                 } catch (\Throwable $e) {
-                    $this->LogMessage("Fehler beim Schalten der Dunstabzugshaube (ID $actuatorId): " . $e->getMessage(), KL_ERROR);
+                    $this->LogMessage("Fehler beim Schalten der Dunstabzugshaube (ID $actuatorId): ". $e->getMessage(), KL_ERROR);
                 }
             }
         }
@@ -247,7 +247,7 @@ class FireplaceSafety extends IPSModuleStrict
     {
         if (is_bool($currentVal)) {
             $t = strtolower(trim($triggerValStr));
-            $triggerBool = ($t === 'true' || $t === '1');
+            $triggerBool = ($t === 'true'|| $t === '1');
             return $currentVal === $triggerBool;
         }
 
@@ -260,7 +260,7 @@ class FireplaceSafety extends IPSModuleStrict
 
     protected function LogMessage(string $Message, int $Type): bool
     {
-        IPS_LogMessage('SmartVillaKunterbunt', 'FireplaceSafety: ' . $Message);
+        IPS_LogMessage('SmartVillaKunterbunt', 'FireplaceSafety: '. $Message);
         return true;
     }
 
@@ -271,7 +271,7 @@ class FireplaceSafety extends IPSModuleStrict
     "elements": [
         {
             "type": "ExpansionPanel",
-            "caption": "⚙️ Sensoren (Eingänge)",
+            "caption": "⚙ Sensoren (Eingänge)",
             "items": [
                 {
                     "type": "RowLayout",
@@ -299,7 +299,7 @@ class FireplaceSafety extends IPSModuleStrict
                         {
                             "type": "ValidationTextBox",
                             "name": "OvenDoorClosedValue",
-                            "caption": "Ofentür-Kontakt: Wert für 'Geschlossen' (z.B. false, 0, geschlossen)"
+                            "caption": "Ofentür-Kontakt: Wert für 'Geschlossen'(z.B. false, 0, geschlossen)"
                         }
                     ]
                 }
