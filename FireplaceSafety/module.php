@@ -16,10 +16,13 @@ class FireplaceSafety extends IPSModuleStrict
         $this->RegisterPropertyInteger("ActuatorHood", 0);
 
         $this->RegisterVariableFloat("CurrentDeltaTemp", "Aktuelle Temperatur-Differenz", "~Temperature");
+        IPS_SetIcon($this->GetIDForIdent('CurrentDeltaTemp'), 'Temperature');
         $this->RegisterVariableBoolean("CurrentDoorStatus", "Status Ofentür", "~Window");
+        IPS_SetIcon($this->GetIDForIdent('CurrentDoorStatus'), 'Information');
 
         
         $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN'(°C)", "FS.DeltaTemp");
+        IPS_SetIcon($this->GetIDForIdent('OvenDeltaTemp'), 'Temperature');
         $this->EnableAction("OvenDeltaTemp");
         if ($this->GetValue("OvenDeltaTemp") == 0) {
             $this->SetValue("OvenDeltaTemp", 15.0);
@@ -27,6 +30,7 @@ class FireplaceSafety extends IPSModuleStrict
 
         
         $this->RegisterVariableInteger("DoorAlarmTime", "Vorwarnzeit Ofentür offen", "FS.AlarmTime");
+        IPS_SetIcon($this->GetIDForIdent('DoorAlarmTime'), 'Warning');
         $this->EnableAction("DoorAlarmTime");
         if ($this->GetValue("DoorAlarmTime") == 0) {
             $this->SetValue("DoorAlarmTime", 300);
@@ -34,11 +38,14 @@ class FireplaceSafety extends IPSModuleStrict
 
         
         $this->RegisterVariableBoolean("OvenStatus", "Status Kaminofen", "FS.OvenStatus");
+        IPS_SetIcon($this->GetIDForIdent('OvenStatus'), 'Information');
 
         
         $this->RegisterVariableBoolean("HoodStatus", "Status Dunstabzugshaube", "FS.HoodStatus");
+        IPS_SetIcon($this->GetIDForIdent('HoodStatus'), 'Information');
 
         $this->RegisterVariableBoolean("AlarmOvenDoor", "Alarm Ofentür", "~Alert");
+        IPS_SetIcon($this->GetIDForIdent('AlarmOvenDoor'), 'Warning');
         $this->EnableAction("AlarmOvenDoor");
 
         // Timers

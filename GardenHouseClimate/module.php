@@ -25,14 +25,17 @@ class GardenHouseClimate extends IPSModuleStrict
         
         // Variables
         $this->RegisterVariableBoolean("WinterMode", "Winterbetrieb", "~Switch");
+        IPS_SetIcon($this->GetIDForIdent('WinterMode'), 'Gear');
         $this->EnableAction("WinterMode");
         $this->SetValue("WinterMode", true); // Default to true
         
         $this->RegisterVariableFloat("TargetTemperature", "Zieltemperatur Frostschutz", "~Temperature");
+        IPS_SetIcon($this->GetIDForIdent('TargetTemperature'), 'Temperature');
         $this->EnableAction("TargetTemperature");
         
         
         $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "GHC.HeaterStatus");
+        IPS_SetIcon($this->GetIDForIdent('HeaterStatus'), 'Information');
         
         if (!IPS_VariableProfileExists('SmartClimate.HeaterStatus')) {
             IPS_CreateVariableProfile('SmartClimate.HeaterStatus', 1);
@@ -44,12 +47,15 @@ class GardenHouseClimate extends IPSModuleStrict
         
         // Alarms (Require Acknowledge)
         $this->RegisterVariableBoolean("AlarmHeaterDefect", "Alarm: Heizung defekt", "~Alert");
+        IPS_SetIcon($this->GetIDForIdent('AlarmHeaterDefect'), 'Warning');
         $this->EnableAction("AlarmHeaterDefect");
         
         $this->RegisterVariableBoolean("AlarmFrost", "Alarm: Kritischer Frost", "~Alert");
+        IPS_SetIcon($this->GetIDForIdent('AlarmFrost'), 'Warning');
         $this->EnableAction("AlarmFrost");
         
         $this->RegisterVariableBoolean("AlarmWindowOpen", "Alarm: Fenster offen (Winter)", "~Alert");
+        IPS_SetIcon($this->GetIDForIdent('AlarmWindowOpen'), 'Warning');
         $this->EnableAction("AlarmWindowOpen");
         
         // Timers

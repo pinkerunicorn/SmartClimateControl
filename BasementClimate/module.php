@@ -29,29 +29,39 @@ class BasementClimate extends IPSModuleStrict
         $this->RegisterPropertyFloat("VentilationThreshold", 0.5);
         
         // Variables
-        $this->RegisterVariableBoolean("VentilationRecommendation", "Lüften empfohlen!", "~Switch");
+        $this->RegisterVariableBoolean("VentilationRecommendation", "Lüften empfohlen!", "");
+        IPS_SetIcon($this->GetIDForIdent('VentilationRecommendation'), 'Wind');
         $this->RegisterVariableString("VentilationDetails", "Hinweis");
+        IPS_SetIcon($this->GetIDForIdent('VentilationDetails'), 'Wind');
         
         $this->RegisterVariableFloat("DewPointInside", "Taupunkt Keller", "~Temperature");
+        IPS_SetIcon($this->GetIDForIdent('DewPointInside'), 'Drop');
         $this->RegisterVariableFloat("DewPointOutside", "Taupunkt Außen", "~Temperature");
+        IPS_SetIcon($this->GetIDForIdent('DewPointOutside'), 'Drop');
         
         $this->RegisterVariableFloat("AbsHumInside", "Absolute Feuchte Keller", "");
+        IPS_SetIcon($this->GetIDForIdent('AbsHumInside'), 'Drop');
         $this->RegisterVariableFloat("AbsHumOutside", "Absolute Feuchte Außen", "");
+        IPS_SetIcon($this->GetIDForIdent('AbsHumOutside'), 'Drop');
         // Current values and Thresholds
         $this->RegisterVariableFloat("CurrentHumidity", "Aktuelle Luftfeuchtigkeit", "~Humidity.F");
+        IPS_SetIcon($this->GetIDForIdent('CurrentHumidity'), 'Drop');
         
         // Custom profile for thresholds (5% steps)
         
         
         $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "BC.HumThreshold");
+        IPS_SetIcon($this->GetIDForIdent('DehumidifierMaxHum'), 'Drop');
         $this->EnableAction("DehumidifierMaxHum");
         
         $this->RegisterVariableFloat("DehumidifierMinHum", "Ausschaltschwelle (Min %)", "BC.HumThreshold");
+        IPS_SetIcon($this->GetIDForIdent('DehumidifierMinHum'), 'Drop');
         $this->EnableAction("DehumidifierMinHum");
         
         // Status of Dehumidifier
         
         $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
+        IPS_SetIcon($this->GetIDForIdent('DehumidifierStatus'), 'Drop');
         
         if (!IPS_VariableProfileExists('SmartClimate.DehumidifierStatus')) {
             IPS_CreateVariableProfile('SmartClimate.DehumidifierStatus', 1);
@@ -63,10 +73,12 @@ class BasementClimate extends IPSModuleStrict
         IPS_SetVariableCustomProfile($this->GetIDForIdent('DehumidifierStatus'), 'SmartClimate.DehumidifierStatus');
         
         // Tank Alarm Variable with Action Script to Acknowledge
-        $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "~Alert");
+        $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "");
+        IPS_SetIcon($this->GetIDForIdent('AlarmTankFull'), 'Warning');
         $this->EnableAction("AlarmTankFull");
         
-        $this->RegisterVariableBoolean("AlarmWindowClose", "Alarm: Fenster schließen", "~Alert");
+        $this->RegisterVariableBoolean("AlarmWindowClose", "Alarm: Fenster schließen", "");
+        IPS_SetIcon($this->GetIDForIdent('AlarmWindowClose'), 'Warning');
         $this->EnableAction("AlarmWindowClose");
         
         // Timers
@@ -147,6 +159,30 @@ class BasementClimate extends IPSModuleStrict
         $powerId = $this->ReadPropertyInteger("SensorDehumidifierPower");
         if ($powerId > 0 && IPS_VariableExists($powerId)) {
             $this->RegisterMessage($powerId, VM_UPDATE);
+        }
+        
+        $iconMap = [
+            'VentilationRecommendation' => 'Wind',
+            'VentilationDetails' => 'Wind',
+            'DewPointInside' => 'Drop',
+            'DewPointOutside' => 'Drop',
+            'AbsHumInside' => 'Drop',
+            'AbsHumOutside' => 'Drop',
+            'CurrentHumidity' => 'Drop',
+            'DehumidifierMaxHum' => 'Drop',
+            'DehumidifierMinHum' => 'Drop',
+            'DehumidifierStatus' => 'Drop',
+            'AlarmTankFull' => 'Warning',
+            'AlarmWindowClose' => 'Warning'
+        ];
+        
+        foreach ($iconMap as $ident => $icon) {
+            if (@IPS_GetObjectIDByIdent($ident, $this->InstanceID) !== false) {
+                IPS_SetVariableCustomPresentation($this->GetIDForIdent($ident), [
+                    'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+                    'ICON'         => $icon
+                ]);
+            }
         }
         
         // Initial Update
