@@ -24,7 +24,7 @@ class GardenHouseClimate extends IPSModuleStrict
         $this->RegisterPropertyFloat("FrostWarningTemp", 3.0);
         
         // Variables
-        $this->RegisterVariableBoolean("WinterMode", "Winterbetrieb", "~Switch");
+        $this->RegisterVariableBoolean("WinterMode", "Winterbetrieb", "");
         IPS_SetIcon($this->GetIDForIdent('WinterMode'), 'Gear');
         $this->EnableAction("WinterMode");
         $this->SetValue("WinterMode", true); // Default to true
@@ -88,6 +88,10 @@ class GardenHouseClimate extends IPSModuleStrict
         }
         // ---------------------------------
 
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('WinterMode'), [
+            'PRESENTATION'=> VARIABLE_PRESENTATION_SWITCH,
+            'ICON'        => 'Gear'
+        ]);
 
         
         foreach ($this->GetMessageList() as $senderID => $messages) {
