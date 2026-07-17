@@ -66,6 +66,9 @@ class GardenHouseClimate extends IPSModuleStrict
     public function ApplyChanges(): void{
         parent::ApplyChanges();
         // --- Auto-generated References ---
+        foreach ($this->GetReferenceList() as $refID) {
+            $this->UnregisterReference($refID);
+        }
         $ref_SensorTempInside = $this->ReadPropertyInteger('SensorTempInside');
         if ($ref_SensorTempInside > 1 && @IPS_ObjectExists($ref_SensorTempInside)) {
             $this->RegisterReference($ref_SensorTempInside);
@@ -82,9 +85,14 @@ class GardenHouseClimate extends IPSModuleStrict
         if ($ref_SensorHeaterPower > 1 && @IPS_ObjectExists($ref_SensorHeaterPower)) {
             $this->RegisterReference($ref_SensorHeaterPower);
         }
-        $ref_WindowOpenTime = $this->ReadPropertyInteger('WindowOpenTime');
-        if ($ref_WindowOpenTime > 1 && @IPS_ObjectExists($ref_WindowOpenTime)) {
-            $this->RegisterReference($ref_WindowOpenTime);
+        $list_SensorWindows = json_decode($this->ReadPropertyString('SensorWindows'), true);
+        if (is_array($list_SensorWindows)) {
+            foreach ($list_SensorWindows as $item) {
+                $vid = $item['VariableID'] ?? 0;
+                if ($vid > 1 && @IPS_ObjectExists($vid)) {
+                    $this->RegisterReference($vid);
+                }
+            }
         }
         // ---------------------------------
 

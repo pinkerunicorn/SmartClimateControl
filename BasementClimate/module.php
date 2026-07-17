@@ -88,6 +88,9 @@ class BasementClimate extends IPSModuleStrict
     public function ApplyChanges(): void{
         parent::ApplyChanges();
         // --- Auto-generated References ---
+        foreach ($this->GetReferenceList() as $refID) {
+            $this->UnregisterReference($refID);
+        }
         $ref_SensorTempOutside = $this->ReadPropertyInteger('SensorTempOutside');
         if ($ref_SensorTempOutside > 1 && @IPS_ObjectExists($ref_SensorTempOutside)) {
             $this->RegisterReference($ref_SensorTempOutside);
@@ -119,6 +122,15 @@ class BasementClimate extends IPSModuleStrict
         $ref_ActuatorRadiator2 = $this->ReadPropertyInteger('ActuatorRadiator2');
         if ($ref_ActuatorRadiator2 > 1 && @IPS_ObjectExists($ref_ActuatorRadiator2)) {
             $this->RegisterReference($ref_ActuatorRadiator2);
+        }
+        $list_SensorWindows = json_decode($this->ReadPropertyString('SensorWindows'), true);
+        if (is_array($list_SensorWindows)) {
+            foreach ($list_SensorWindows as $item) {
+                $vid = $item['VariableID'] ?? 0;
+                if ($vid > 1 && @IPS_ObjectExists($vid)) {
+                    $this->RegisterReference($vid);
+                }
+            }
         }
         // ---------------------------------
 

@@ -55,6 +55,9 @@ class FireplaceSafety extends IPSModuleStrict
     public function ApplyChanges(): void{
         parent::ApplyChanges();
         // --- Auto-generated References ---
+        foreach ($this->GetReferenceList() as $refID) {
+            $this->UnregisterReference($refID);
+        }
         $ref_SensorOvenTemp = $this->ReadPropertyInteger('SensorOvenTemp');
         if ($ref_SensorOvenTemp > 1 && @IPS_ObjectExists($ref_SensorOvenTemp)) {
             $this->RegisterReference($ref_SensorOvenTemp);
@@ -70,6 +73,15 @@ class FireplaceSafety extends IPSModuleStrict
         $ref_ActuatorHood = $this->ReadPropertyInteger('ActuatorHood');
         if ($ref_ActuatorHood > 1 && @IPS_ObjectExists($ref_ActuatorHood)) {
             $this->RegisterReference($ref_ActuatorHood);
+        }
+        $list_SensorWindows = json_decode($this->ReadPropertyString('SensorWindows'), true);
+        if (is_array($list_SensorWindows)) {
+            foreach ($list_SensorWindows as $item) {
+                $vid = $item['VariableID'] ?? 0;
+                if ($vid > 1 && @IPS_ObjectExists($vid)) {
+                    $this->RegisterReference($vid);
+                }
+            }
         }
         // ---------------------------------
 
