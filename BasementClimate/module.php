@@ -314,18 +314,19 @@ class BasementClimate extends IPSModuleStrict
         if ($windowOpen) {
             $newStatus = false;
             $statusText = 2;
-        } elseif ($tankFull) {
-            $newStatus = false;
-            $statusText = 3;
         } else {
             if ($humIn >= $maxHum) {
                 $newStatus = true;
-                $statusText = 1;
             } elseif ($humIn <= $minHum) {
                 $newStatus = false;
-                $statusText = 0;
             } else {
-                $statusText = $plugStatus ? 1 : 0;
+                $newStatus = $plugStatus;
+            }
+            
+            if ($tankFull) {
+                $statusText = 3;
+            } else {
+                $statusText = $newStatus ? 1 : 0;
             }
         }
         
@@ -378,12 +379,18 @@ class BasementClimate extends IPSModuleStrict
             if ($currentPower < $threshold) {
                 // If timer is not running, start it
                 $timerData = $this->GetTimerInterval("PowerCheckTimer");
-                if ($timerData == 0) {
+                if ($timerData == 0 && !$this->GetValue("AlarmTankFull")) {
                     $this->SetTimerInterval("PowerCheckTimer", $timeLimit * 1000);
                 }
             } else {
                 // Power is fine, stop timer
                 $this->SetTimerInterval("PowerCheckTimer", 0);
+                
+                // If tank was full, auto reset the alarm
+                if ($this->GetValue("AlarmTankFull")) {
+                    $this->SetValue("AlarmTankFull", false);
+                    $this->UpdateClimate();
+                }
             }
         } else {
             $this->SetTimerInterval("PowerCheckTimer", 0);
