@@ -29,8 +29,12 @@ class BasementClimate extends IPSModuleStrict
         $this->RegisterPropertyFloat("VentilationThreshold", 0.5);
         
         // Variables
-        $this->RegisterVariableBoolean("VentilationRecommendation", "Lüften empfohlen!", "");
-        IPS_SetIcon($this->GetIDForIdent('VentilationRecommendation'), 'Wind');
+        if (!IPS_VariableProfileExists('SmartClimate.VentilationRecommendation')) {
+            IPS_CreateVariableProfile('SmartClimate.VentilationRecommendation', 0);
+            IPS_SetVariableProfileAssociation('SmartClimate.VentilationRecommendation', false, 'Nicht Lüften!', '', -1);
+            IPS_SetVariableProfileAssociation('SmartClimate.VentilationRecommendation', true, 'Lüften!', '', -1);
+        }
+        $this->RegisterVariableBoolean("VentilationRecommendation", "Lüften empfohlen!", "SmartClimate.VentilationRecommendation");
         $this->RegisterVariableString("VentilationDetails", "Hinweis");
         IPS_SetIcon($this->GetIDForIdent('VentilationDetails'), 'Wind');
         
@@ -190,17 +194,10 @@ class BasementClimate extends IPSModuleStrict
         
         foreach ($iconMap as $ident => $icon) {
             if (@IPS_GetObjectIDByIdent($ident, $this->InstanceID) !== false) {
-                $presentation = [
+                IPS_SetVariableCustomPresentation($this->GetIDForIdent($ident), [
                     'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
                     'ICON'         => $icon
-                ];
-                if ($ident === 'VentilationRecommendation') {
-                    $mapping = new stdClass();
-                    $mapping->{'0'} = 'Nicht Lüften!';
-                    $mapping->{'1'} = 'Lüften!';
-                    $presentation['MAPPING'] = $mapping;
-                }
-                IPS_SetVariableCustomPresentation($this->GetIDForIdent($ident), $presentation);
+                ]);
             }
         }
         
