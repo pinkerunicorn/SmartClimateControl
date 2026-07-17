@@ -190,10 +190,14 @@ class BasementClimate extends IPSModuleStrict
         
         foreach ($iconMap as $ident => $icon) {
             if (@IPS_GetObjectIDByIdent($ident, $this->InstanceID) !== false) {
-                IPS_SetVariableCustomPresentation($this->GetIDForIdent($ident), [
+                $presentation = [
                     'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
                     'ICON'         => $icon
-                ]);
+                ];
+                if ($ident === 'VentilationRecommendation') {
+                    $presentation['MAPPING'] = [false => 'Nicht Lüften!', true => 'Lüften!'];
+                }
+                IPS_SetVariableCustomPresentation($this->GetIDForIdent($ident), $presentation);
             }
         }
         
