@@ -591,7 +591,7 @@ class BasementClimate extends IPSModuleStrict
         },
         {
             "type": "Label",
-            "caption": "Einstellungen Entfeuchter"
+            "caption": "Einstellungen Entfeuchter\n\nDas Modul steuert den Entfeuchter automatisch basierend auf der Kellerfeuchtigkeit (Ausschalt- und Einschaltschwelle). Ist ein Fenster geöffnet, pausiert der Entfeuchter automatisch. Wird über die Leistungsmessung festgestellt, dass der Entfeuchter läuft, aber über eine bestimmte Dauer fast keinen Strom verbraucht (z. B. Standby), erkennt das Modul, dass der Wassertank voll ist, und schlägt Alarm."
         },
         {
             "type": "NumberSpinner",
@@ -606,7 +606,7 @@ class BasementClimate extends IPSModuleStrict
         },
         {
             "type": "Label",
-            "caption": "Einstellungen Heizung"
+            "caption": "Einstellungen Heizung\n\nAnti-Schimmel-Logik: Die hier definierten Heizkörper werden regulär auf die 'Basis-Solltemperatur' geregelt. Steigt die Luftfeuchtigkeit im Keller jedoch auf kritische Werte (> 70%), wird die Solltemperatur automatisch um 2°C erhöht. Wärmere Luft kann mehr Feuchtigkeit aufnehmen, was der Schimmelbildung aktiv entgegenwirkt."
         },
         {
             "type": "NumberSpinner",
@@ -616,7 +616,7 @@ class BasementClimate extends IPSModuleStrict
         },
         {
             "type": "Label",
-            "caption": "Einstellungen Lüftungsempfehlung"
+            "caption": "Einstellungen Lüftungsempfehlung\n\nDas Modul vergleicht kontinuierlich die absolute Feuchtigkeit (g/m³) von Innen und Außen. Es gibt eine Lüftungsempfehlung ab, wenn es draußen trocken genug ist (Differenz-Schwellwert). Wenn das Fenster offen ist und die Außenluft feuchter wird als die Innenluft, warnt das Modul rechtzeitig (Puffer), um das Fenster wieder zu schließen und den Keller vor weiterer Feuchtigkeit zu schützen."
         },
         {
             "type": "NumberSpinner",
