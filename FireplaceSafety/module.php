@@ -7,55 +7,33 @@ class FireplaceSafety extends IPSModuleStrict
     public function Create(): void{
         parent::Create();
 
-        // Properties
+        // --- Konfiguration (Properties) ---
+        // Sensoren
         $this->RegisterPropertyInteger("SensorOvenTemp", 0);
         $this->RegisterPropertyInteger("SensorRoomTemp", 0);
         $this->RegisterPropertyInteger("SensorOvenDoor", 0);
         $this->RegisterPropertyString("OvenDoorClosedValue", "false");
         $this->RegisterPropertyString("SensorWindows", "[]");
+        // Aktoren
         $this->RegisterPropertyInteger("ActuatorHood", 0);
+        // Parameter
+        $this->RegisterPropertyFloat("OvenDeltaTemp", 15.0);
+        $this->RegisterPropertyFloat("PeakDropThreshold", 5.0);
+        $this->RegisterPropertyFloat("MaxRoomTemp", 24.0);
+        $this->RegisterPropertyInteger("DoorAlarmTime", 300);
 
-        // Variables without legacy profiles
+        // --- Status-Variablen ---
         $this->RegisterVariableFloat("CurrentDeltaTemp", "Aktuelle Temperatur-Differenz", "");
-        
         $this->RegisterVariableBoolean("CurrentDoorStatus", "Status Ofentür", "");
-
-        $this->RegisterVariableFloat("OvenDeltaTemp", "Temperaturdifferenz für 'Ofen AN'(°C)", "");
-        $this->EnableAction("OvenDeltaTemp");
-        if ($this->GetValue("OvenDeltaTemp") == 0) {
-            $this->SetValue("OvenDeltaTemp", 15.0);
-        }
-
-        $this->RegisterVariableInteger("DoorAlarmTime", "Vorwarnzeit Ofentür offen", "");
-        $this->EnableAction("DoorAlarmTime");
-        if ($this->GetValue("DoorAlarmTime") == 0) {
-            $this->SetValue("DoorAlarmTime", 300);
-        }
-
         $this->RegisterVariableBoolean("OvenStatus", "Status Kaminofen", "");
-        
         $this->RegisterVariableBoolean("HoodStatus", "Status Dunstabzugshaube", "");
-
         $this->RegisterVariableBoolean("AlarmOvenDoor", "Alarm Ofentür", "");
-        $this->EnableAction("AlarmOvenDoor");
-
-        $this->RegisterVariableFloat("PeakDropThreshold", "Temp-Abfall für 'Holz nachlegen' (°C)", "");
-        $this->EnableAction("PeakDropThreshold");
-        if ($this->GetValue("PeakDropThreshold") == 0) {
-            $this->SetValue("PeakDropThreshold", 5.0);
-        }
-
-        $this->RegisterVariableFloat("MaxRoomTemp", "Max. Raumtemperatur für 'Holz nachlegen'", "");
-        $this->EnableAction("MaxRoomTemp");
-        if ($this->GetValue("MaxRoomTemp") == 0) {
-            $this->SetValue("MaxRoomTemp", 24.0);
-        }
+        $this->EnableAction("AlarmOvenDoor"); // Quittierbar per Webfront
 
         $this->RegisterVariableFloat("OvenPeakTemp", "Letzte Spitzen-Temperatur", "");
-
         $this->RegisterVariableBoolean("WoodRefillNeeded", "Bitte Holz nachlegen", "");
 
-        // Timers
+        // --- Timers ---
         $this->RegisterTimer("DoorAlarmTimer", 0, 'FS_TriggerDoorAlarm($_IPS[\'TARGET\']);');
     }
 
@@ -97,19 +75,15 @@ class FireplaceSafety extends IPSModuleStrict
         if (function_exists('IPS_SetVariableCustomPresentation')) {
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('CurrentDeltaTemp'), ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('CurrentDoorStatus'), ['ICON' => 'Window']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenDeltaTemp'), ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('DoorAlarmTime'), ['ICON' => 'Clock', 'SUFFIX' => ' s']);
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmOvenDoor'), ['ICON' => 'Warning']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('PeakDropThreshold'), ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('MaxRoomTemp'), ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenPeakTemp'), ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('WoodRefillNeeded'), ['ICON' => 'Warning']);
             
-            // Custom associations for specific booleans
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenStatus'), ['ICON' => 'Flame']);
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('HoodStatus'), ['ICON' => 'Information']);
         }
 
+        // --- Custom Profiles ---
         if (!IPS_VariableProfileExists('SmartClimate.OvenStatus')) {
             IPS_CreateVariableProfile('SmartClimate.OvenStatus', 0); // Boolean
             IPS_SetVariableProfileAssociation('SmartClimate.OvenStatus', false, 'Aus', 'Flame', -1);
@@ -124,6 +98,7 @@ class FireplaceSafety extends IPSModuleStrict
         }
         IPS_SetVariableCustomProfile($this->GetIDForIdent('HoodStatus'), 'SmartClimate.HoodStatus');
 
+
         // Clear all previous message registrations
         foreach ($this->GetMessageList() as $senderID => $messages) {
             foreach ($messages as $message) {
@@ -131,6 +106,7 @@ class FireplaceSafety extends IPSModuleStrict
             }
         }
 
+        // Register Sensor Messages
         $ovenTemp = $this->ReadPropertyInteger("SensorOvenTemp");
         if ($ovenTemp > 0 && IPS_VariableExists($ovenTemp)) {
             $this->RegisterMessage($ovenTemp, VM_UPDATE);
@@ -154,6 +130,7 @@ class FireplaceSafety extends IPSModuleStrict
             }
         }
 
+        // Initial update
         $this->UpdateSafety();
     }
 
@@ -163,14 +140,8 @@ class FireplaceSafety extends IPSModuleStrict
 
     public function RequestAction(string $Ident, $Value): void{
         switch ($Ident) {
-            case "OvenDeltaTemp":
-            case "DoorAlarmTime":
-            case "PeakDropThreshold":
-            case "MaxRoomTemp":
-                $this->SetValue($Ident, $Value);
-                $this->UpdateSafety();
-                break;
             case "AlarmOvenDoor":
+                // Quittierung des Ofentür-Alarms
                 if ($Value == false) {
                     $this->SetValue($Ident, false);
                     $this->UpdateSafety();
@@ -183,6 +154,7 @@ class FireplaceSafety extends IPSModuleStrict
 
     public function TriggerDoorAlarm()
     {
+        // Wird aufgerufen, wenn der Timer abläuft
         $this->SetTimerInterval("DoorAlarmTimer", 0);
         $this->SetValueIfChanged("AlarmOvenDoor", true);
         $this->SendDebug("Timer", "Ofentür-Alarm ausgelöst!", 0);
@@ -201,10 +173,12 @@ class FireplaceSafety extends IPSModuleStrict
         $roomTempId = $this->ReadPropertyInteger("SensorRoomTemp");
         
         $isOvenOn = false;
+        
+        // --- 1. Temperatur- & Peak-Logik auswerten ---
         if ($ovenTempId > 0 && IPS_VariableExists($ovenTempId) && $roomTempId > 0 && IPS_VariableExists($roomTempId)) {
             $tOven = GetValue($ovenTempId);
             $tRoom = GetValue($roomTempId);
-            $deltaSetting = $this->GetValue("OvenDeltaTemp");
+            $deltaSetting = $this->ReadPropertyFloat("OvenDeltaTemp");
             
             $currentDelta = $tOven - $tRoom;
             $this->SetValueIfChanged("CurrentDeltaTemp", $currentDelta);
@@ -213,16 +187,20 @@ class FireplaceSafety extends IPSModuleStrict
                 $isOvenOn = true;
             }
 
-            // Peak tracking and refill logic
+            // Peak tracking und "Nachlegen"-Logik
             $refillNeeded = false;
             if ($isOvenOn) {
                 $peak = $this->GetValue("OvenPeakTemp");
                 if ($tOven > $peak) {
+                    // Neuer Peak erreicht
                     $peak = $tOven;
                     $this->SetValue("OvenPeakTemp", $peak);
                 }
-                if ($peak > 0 && $tOven <= ($peak - $this->GetValue("PeakDropThreshold"))) {
-                    if ($tRoom < $this->GetValue("MaxRoomTemp")) {
+                
+                // Wenn Temperatur vom Peak um Threshold abfällt, ist es Zeit nachzulegen...
+                if ($peak > 0 && $tOven <= ($peak - $this->ReadPropertyFloat("PeakDropThreshold"))) {
+                    // ...außer der Raum ist ohnehin schon wärmer als MaxRoomTemp
+                    if ($tRoom < $this->ReadPropertyFloat("MaxRoomTemp")) {
                         $refillNeeded = true;
                     }
                 }
@@ -231,12 +209,13 @@ class FireplaceSafety extends IPSModuleStrict
             }
             $this->SetValueIfChanged("WoodRefillNeeded", $refillNeeded);
         } else {
+            // Sensoren fehlen oder ungültig
             $this->SetValueIfChanged("OvenPeakTemp", 0.0);
             $this->SetValueIfChanged("WoodRefillNeeded", false);
         }
         $this->SetValueIfChanged("OvenStatus", $isOvenOn);
 
-        // Check Windows
+        // --- 2. Fenster-Sensoren auswerten ---
         $anyWindowOpen = false;
         $windows = json_decode($this->ReadPropertyString("SensorWindows"), true) ?: [];
         foreach ($windows as $win) {
@@ -252,7 +231,7 @@ class FireplaceSafety extends IPSModuleStrict
             }
         }
 
-        // Check Door
+        // --- 3. Ofentür auswerten ---
         $isDoorOpen = false;
         $ovenDoorId = $this->ReadPropertyInteger("SensorOvenDoor");
         if ($ovenDoorId > 0 && IPS_VariableExists($ovenDoorId)) {
@@ -264,10 +243,10 @@ class FireplaceSafety extends IPSModuleStrict
         }
         $this->SetValueIfChanged("CurrentDoorStatus", $isDoorOpen);
 
-        // Door Alarm Logic
+        // Tür-Alarm Logik (Startet, wenn Tür auf und Ofen brennt)
         if ($isOvenOn && $isDoorOpen) {
             if ($this->GetTimerInterval("DoorAlarmTimer") == 0 && !$this->GetValue("AlarmOvenDoor")) {
-                $delay = $this->GetValue("DoorAlarmTime");
+                $delay = $this->ReadPropertyInteger("DoorAlarmTime");
                 $this->SetTimerInterval("DoorAlarmTimer", $delay * 1000);
                 $this->SendDebug("Timer", "Ofentür geöffnet, Timer gestartet ($delay Sekunden)", 0);
             }
@@ -281,8 +260,8 @@ class FireplaceSafety extends IPSModuleStrict
             }
         }
 
-        // Hood Logic
-        // If oven is ON, we need a window open. Else, hood is safe.
+        // --- 4. Dunstabzugshauben Sicherheits-Logik ---
+        // Haube darf nur an sein, wenn der Ofen aus ist ODER ein Fenster geöffnet ist.
         $allowHood = true;
         if ($isOvenOn && !$anyWindowOpen) {
             $allowHood = false;
@@ -293,7 +272,7 @@ class FireplaceSafety extends IPSModuleStrict
         if ($actuatorId > 0 && IPS_VariableExists($actuatorId)) {
             $currentPlug = GetValue($actuatorId);
             
-            // To ensure safe types (if currentPlug is int, allowHood is bool)
+            // Cast auf bool, um sicheren Vergleich zu haben
             $currentPlugBool = (bool)$currentPlug;
             
             if ($currentPlugBool !== $allowHood) {
@@ -393,6 +372,53 @@ class FireplaceSafety extends IPSModuleStrict
                     "edit": {
                         "type": "ValidationTextBox"
                     }
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "🔧 Parameter & Schwellenwerte",
+            "items": [
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "NumberSpinner",
+                            "name": "OvenDeltaTemp",
+                            "caption": "Ofen an ab Temp-Delta (°C)",
+                            "digits": 1,
+                            "minimum": 1,
+                            "maximum": 50
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "name": "PeakDropThreshold",
+                            "caption": "Temp-Abfall für 'Nachlegen' (°C)",
+                            "digits": 1,
+                            "minimum": 1,
+                            "maximum": 50
+                        }
+                    ]
+                },
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "NumberSpinner",
+                            "name": "MaxRoomTemp",
+                            "caption": "Max. Raumtemp. für 'Nachlegen' (°C)",
+                            "digits": 1,
+                            "minimum": 10,
+                            "maximum": 35
+                        },
+                        {
+                            "type": "NumberSpinner",
+                            "name": "DoorAlarmTime",
+                            "caption": "Ofentür-Alarm Vorwarnzeit (s)",
+                            "minimum": 0,
+                            "maximum": 3600
+                        }
+                    ]
                 }
             ]
         },

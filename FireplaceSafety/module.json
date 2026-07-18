@@ -37,6 +37,22 @@
         "ActuatorHood": {
             "type": "integer",
             "default": 0
+        },
+        "OvenDeltaTemp": {
+            "type": "float",
+            "default": 15.0
+        },
+        "PeakDropThreshold": {
+            "type": "float",
+            "default": 5.0
+        },
+        "MaxRoomTemp": {
+            "type": "float",
+            "default": 24.0
+        },
+        "DoorAlarmTime": {
+            "type": "integer",
+            "default": 300
         }
     }
 }
