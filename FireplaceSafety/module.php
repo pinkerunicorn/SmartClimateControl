@@ -380,6 +380,10 @@ class FireplaceSafety extends IPSModuleStrict
             "caption": "🔧 Parameter & Schwellenwerte",
             "items": [
                 {
+                    "type": "Label",
+                    "caption": "Hier stellst du ein, wie sensibel das Modul auf Temperaturveränderungen reagieren soll:"
+                },
+                {
                     "type": "RowLayout",
                     "items": [
                         {
@@ -401,6 +405,10 @@ class FireplaceSafety extends IPSModuleStrict
                     ]
                 },
                 {
+                    "type": "Label",
+                    "caption": "Erklärung: \n- 'Ofen an': Der Kamin gilt als eingeschaltet, wenn der Ofenfühler um diesen Wert wärmer ist als der Raum.\n- 'Nachlegen': Fällt die Temperatur nach dem Höhepunkt um diesen Wert ab, wird zum Nachlegen geraten."
+                },
+                {
                     "type": "RowLayout",
                     "items": [
                         {
@@ -419,6 +427,10 @@ class FireplaceSafety extends IPSModuleStrict
                             "maximum": 3600
                         }
                     ]
+                },
+                {
+                    "type": "Label",
+                    "caption": "Erklärung: \n- 'Max. Raumtemp': Ist der Raum bereits wärmer als dieser Wert, blockiert das Modul die Nachlege-Meldung.\n- 'Vorwarnzeit': Wie lange darf die Ofentür bei brennendem Ofen offen stehen, bevor ein Alarm ausgelöst wird?"
                 }
             ]
         },
