@@ -106,22 +106,23 @@ class FireplaceSafety extends IPSModuleStrict
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('WoodRefillNeeded'), ['ICON' => 'Warning']);
             
             // Custom associations for specific booleans
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenStatus'), [
-                'ICON' => 'Flame',
-                'ASSOCIATIONS' => [
-                    ['VALUE' => false, 'NAME' => 'Aus', 'ICON' => '', 'COLOR' => -1],
-                    ['VALUE' => true, 'NAME' => 'Brennt', 'ICON' => 'Flame', 'COLOR' => 0xFF0000]
-                ]
-            ]);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('HoodStatus'), [
-                'ICON' => 'Information',
-                'ASSOCIATIONS' => [
-                    ['VALUE' => false, 'NAME' => 'Gesperrt', 'ICON' => 'Lock', 'COLOR' => 0xFF0000],
-                    ['VALUE' => true, 'NAME' => 'Freigegeben', 'ICON' => 'Unlock', 'COLOR' => 0x00FF00]
-                ]
-            ]);
+            IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenStatus'), ['ICON' => 'Flame']);
+            IPS_SetVariableCustomPresentation($this->GetIDForIdent('HoodStatus'), ['ICON' => 'Information']);
         }
 
+        if (!IPS_VariableProfileExists('SmartClimate.OvenStatus')) {
+            IPS_CreateVariableProfile('SmartClimate.OvenStatus', 0); // Boolean
+            IPS_SetVariableProfileAssociation('SmartClimate.OvenStatus', false, 'Aus', 'Flame', -1);
+            IPS_SetVariableProfileAssociation('SmartClimate.OvenStatus', true, 'Brennt', 'Flame', 0xFF0000);
+        }
+        IPS_SetVariableCustomProfile($this->GetIDForIdent('OvenStatus'), 'SmartClimate.OvenStatus');
+
+        if (!IPS_VariableProfileExists('SmartClimate.HoodStatus')) {
+            IPS_CreateVariableProfile('SmartClimate.HoodStatus', 0); // Boolean
+            IPS_SetVariableProfileAssociation('SmartClimate.HoodStatus', false, 'Gesperrt', 'Lock', 0xFF0000);
+            IPS_SetVariableProfileAssociation('SmartClimate.HoodStatus', true, 'Freigegeben', 'Unlock', 0x00FF00);
+        }
+        IPS_SetVariableCustomProfile($this->GetIDForIdent('HoodStatus'), 'SmartClimate.HoodStatus');
 
         // Clear all previous message registrations
         foreach ($this->GetMessageList() as $senderID => $messages) {
