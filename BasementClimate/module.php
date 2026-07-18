@@ -27,6 +27,7 @@ class BasementClimate extends IPSModuleStrict
         
         $this->RegisterPropertyFloat("TargetTemperature", 18.0);
         $this->RegisterPropertyFloat("VentilationThreshold", 0.5);
+        $this->RegisterPropertyFloat("VentilationCloseMargin", 0.3);
         
         // Variables
         if (!IPS_VariableProfileExists('SmartClimate.VentilationRecommendation')) {
@@ -280,6 +281,7 @@ class BasementClimate extends IPSModuleStrict
             
             // Ventilation logic
             $threshold = $this->ReadPropertyFloat("VentilationThreshold");
+            $closeMargin = $this->ReadPropertyFloat("VentilationCloseMargin");
             $recommendation = false;
             $closeAlarm = false;
             $details = "Keine Aktion erforderlich.";
@@ -294,9 +296,13 @@ class BasementClimate extends IPSModuleStrict
                 // Automatically clear close alarm if window is closed
                 $this->SetValueIfChanged("AlarmWindowClose", false);
             } else {
-                if ($absOut >= $absIn) {
+                if ($absOut >= ($absIn - $closeMargin)) {
                     $closeAlarm = true;
-                    $details = sprintf("Fenster SCHLIESSEN! Außen wird es feuchter (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                    if ($absOut >= $absIn) {
+                        $details = sprintf("Fenster SCHLIESSEN! Außen wird es feuchter (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                    } else {
+                        $details = sprintf("Achtung: Fenster bald schließen! Außenfeuchte nähert sich der Innenfeuchte (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
+                    }
                 } else {
                     $details = sprintf("Lüften trocknet weiterhin (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
                 }
@@ -616,6 +622,12 @@ class BasementClimate extends IPSModuleStrict
             "type": "NumberSpinner",
             "name": "VentilationThreshold",
             "caption": "Mindest-Differenz (g/m³) für Lüftung",
+            "digits": 1
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "VentilationCloseMargin",
+            "caption": "Puffer (g/m³) für Schließ-Warnung",
             "digits": 1
         }
     ]
