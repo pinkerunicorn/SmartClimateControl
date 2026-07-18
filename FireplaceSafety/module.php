@@ -436,7 +436,7 @@ class FireplaceSafety extends IPSModuleStrict
         },
         {
             "type": "Label",
-            "caption": "Aktoren (Ausgänge)"
+            "caption": "Aktoren (Ausgänge)\nHier wählst du den Aktor für die Dunstabzugshaube aus:"
         },
         {
             "type": "SelectVariable",

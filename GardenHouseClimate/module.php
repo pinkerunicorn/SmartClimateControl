@@ -418,7 +418,7 @@ class GardenHouseClimate extends IPSModuleStrict
         },
         {
             "type": "Label",
-            "caption": "Aktoren"
+            "caption": "Aktoren\nHier wählst du die passenden Aktoren für das Gartenhaus aus:"
         },
         {
             "type": "SelectVariable",
@@ -432,7 +432,7 @@ class GardenHouseClimate extends IPSModuleStrict
         },
         {
             "type": "Label",
-            "caption": "Temperatureinstellungen"
+            "caption": "Temperatureinstellungen\nHier stellst du ein, ab welcher Temperaturabweichung die Heizung schaltet:"
         },
         {
             "type": "NumberSpinner",
@@ -442,7 +442,7 @@ class GardenHouseClimate extends IPSModuleStrict
         },
         {
             "type": "Label",
-            "caption": "Ausfallsicherheit / Alarme"
+            "caption": "Ausfallsicherheit / Alarme\nHier stellst du ein, wann ein Alarm wegen Ausfall ausgelöst wird:"
         },
         {
             "type": "NumberSpinner",
