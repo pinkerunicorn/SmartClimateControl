@@ -33,8 +33,7 @@ class GardenHouseClimate extends IPSModuleStrict
         IPS_SetIcon($this->GetIDForIdent('TargetTemperature'), 'Temperature');
         $this->EnableAction("TargetTemperature");
         
-        
-        $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "GHC.HeaterStatus");
+        $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "");
         IPS_SetIcon($this->GetIDForIdent('HeaterStatus'), 'Information');
         
         if (!IPS_VariableProfileExists('SmartClimate.HeaterStatus')) {
@@ -45,16 +44,16 @@ class GardenHouseClimate extends IPSModuleStrict
         }
         IPS_SetVariableCustomProfile($this->GetIDForIdent('HeaterStatus'), 'SmartClimate.HeaterStatus');
         
-        // Alarms (Require Acknowledge)
-        $this->RegisterVariableBoolean("AlarmHeaterDefect", "Alarm: Heizung defekt", "~Alert");
+        // Alarms (Require Acknowledge) — no legacy profile, use CustomPresentation
+        $this->RegisterVariableBoolean("AlarmHeaterDefect", "Alarm: Heizung defekt", "");
         IPS_SetIcon($this->GetIDForIdent('AlarmHeaterDefect'), 'Warning');
         $this->EnableAction("AlarmHeaterDefect");
         
-        $this->RegisterVariableBoolean("AlarmFrost", "Alarm: Kritischer Frost", "~Alert");
+        $this->RegisterVariableBoolean("AlarmFrost", "Alarm: Kritischer Frost", "");
         IPS_SetIcon($this->GetIDForIdent('AlarmFrost'), 'Warning');
         $this->EnableAction("AlarmFrost");
         
-        $this->RegisterVariableBoolean("AlarmWindowOpen", "Alarm: Fenster offen (Winter)", "~Alert");
+        $this->RegisterVariableBoolean("AlarmWindowOpen", "Alarm: Fenster offen (Winter)", "");
         IPS_SetIcon($this->GetIDForIdent('AlarmWindowOpen'), 'Warning');
         $this->EnableAction("AlarmWindowOpen");
         
@@ -96,12 +95,40 @@ class GardenHouseClimate extends IPSModuleStrict
         }
         // ---------------------------------
 
+        // Presentations (Symcon 8+)
         IPS_SetVariableCustomPresentation($this->GetIDForIdent('WinterMode'), [
-            'PRESENTATION'=> VARIABLE_PRESENTATION_SWITCH,
-            'ICON'        => 'Gear'
+            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            'ICON'         => 'Gear'
         ]);
 
-        
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmHeaterDefect'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            'ICON'         => 'Warning',
+            'ONCOLOR'      => 0xFF0000,
+            'OFFCOLOR'     => 0x00FF00,
+            'ONCAPTION'    => 'ALARM: Heizung defekt',
+            'OFFCAPTION'   => 'OK'
+        ]);
+
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmFrost'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            'ICON'         => 'Warning',
+            'ONCOLOR'      => 0xFF0000,
+            'OFFCOLOR'     => 0x00FF00,
+            'ONCAPTION'    => 'ALARM: Kritischer Frost',
+            'OFFCAPTION'   => 'OK'
+        ]);
+
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmWindowOpen'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
+            'ICON'         => 'Warning',
+            'ONCOLOR'      => 0xFF6600,
+            'OFFCOLOR'     => 0x00FF00,
+            'ONCAPTION'    => 'ALARM: Fenster offen (Winter)',
+            'OFFCAPTION'   => 'OK'
+        ]);
+
+        // Unregister old messages
         foreach ($this->GetMessageList() as $senderID => $messages) {
             foreach ($messages as $message) {
                 $this->UnregisterMessage($senderID, $message);
@@ -348,7 +375,7 @@ class GardenHouseClimate extends IPSModuleStrict
         $isClosed = false;
         
         if (is_bool($currentVal)) {
-            $targetBool = ($closedValue === 'true'|| $closedValue === '1'|| strtolower((string)$closedValue) === 'wahr');
+            $targetBool = ($closedValue === 'true' || $closedValue === '1' || strtolower((string)$closedValue) === 'wahr');
             $isClosed = ($currentVal === $targetBool);
         } else {
             $isClosed = ((string)$currentVal === (string)$closedValue);
@@ -471,5 +498,3 @@ class GardenHouseClimate extends IPSModuleStrict
 EOT;
     }
 }
-
-
