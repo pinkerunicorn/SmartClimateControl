@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../ClimateCommon.php';
+
 class BasementClimate extends IPSModuleStrict
 {
+    use ClimateCommon;
+
     public function Create(): void{
         parent::Create();
 
@@ -48,12 +52,8 @@ class BasementClimate extends IPSModuleStrict
         IPS_SetIcon($this->GetIDForIdent('AbsHumInside'), 'Drop');
         $this->RegisterVariableFloat("AbsHumOutside", "Absolute Feuchte Außen", "");
         IPS_SetIcon($this->GetIDForIdent('AbsHumOutside'), 'Drop');
-        // Current values and Thresholds
         $this->RegisterVariableFloat("CurrentHumidity", "Aktuelle Luftfeuchtigkeit", "~Humidity.F");
         IPS_SetIcon($this->GetIDForIdent('CurrentHumidity'), 'Drop');
-        
-        // Custom profile for thresholds (5% steps)
-        
         
         $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "BC.HumThreshold");
         IPS_SetIcon($this->GetIDForIdent('DehumidifierMaxHum'), 'Drop');
@@ -62,8 +62,6 @@ class BasementClimate extends IPSModuleStrict
         $this->RegisterVariableFloat("DehumidifierMinHum", "Ausschaltschwelle (Min %)", "BC.HumThreshold");
         IPS_SetIcon($this->GetIDForIdent('DehumidifierMinHum'), 'Drop');
         $this->EnableAction("DehumidifierMinHum");
-        
-        // Status of Dehumidifier
         
         $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
         IPS_SetIcon($this->GetIDForIdent('DehumidifierStatus'), 'Drop');
@@ -77,7 +75,7 @@ class BasementClimate extends IPSModuleStrict
         }
         IPS_SetVariableCustomProfile($this->GetIDForIdent('DehumidifierStatus'), 'SmartClimate.DehumidifierStatus');
         
-        // Tank Alarm Variable with Action Script to Acknowledge
+        // Alarm Variables (no legacy profiles — use CustomPresentation via Trait)
         $this->RegisterVariableBoolean("AlarmTankFull", "Alarm: Wassertank voll", "");
         IPS_SetIcon($this->GetIDForIdent('AlarmTankFull'), 'Warning');
         $this->EnableAction("AlarmTankFull");
@@ -128,71 +126,39 @@ class BasementClimate extends IPSModuleStrict
         if ($ref_ActuatorRadiator2 > 1 && @IPS_ObjectExists($ref_ActuatorRadiator2)) {
             $this->RegisterReference($ref_ActuatorRadiator2);
         }
-        $list_SensorWindows = json_decode($this->ReadPropertyString('SensorWindows'), true);
-        if (is_array($list_SensorWindows)) {
-            foreach ($list_SensorWindows as $item) {
-                $vid = $item['VariableID'] ?? 0;
-                if ($vid > 1 && @IPS_ObjectExists($vid)) {
-                    $this->RegisterReference($vid);
-                }
-            }
-        }
+        $this->RegisterWindowReferences(); // Trait
         // ---------------------------------
 
-
+        // Unregister old messages, then re-register (Trait)
+        $this->UnregisterAllMessages();
         
-        // Unregister all messages first
-        foreach ($this->GetMessageList() as $senderID => $messages) {
-            foreach ($messages as $message) {
-                $this->UnregisterMessage($senderID, $message);
-            }
-        }
-        
-        // Register messages for sensors
-        $sensors = [
-            "SensorTempOutside", "SensorHumOutside", 
-            "SensorTempInside", "SensorHumInside"
-        ];
-        
+        $sensors = ["SensorTempOutside", "SensorHumOutside", "SensorTempInside", "SensorHumInside"];
         foreach ($sensors as $sensorName) {
             $id = $this->ReadPropertyInteger($sensorName);
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterMessage($id, VM_UPDATE);
             }
         }
+        $this->RegisterWindowMessages(); // Trait
         
-        // Register messages for window sensors
-        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
-        if (is_array($windows)) {
-            foreach ($windows as $w) {
-                $vid = $w['VariableID'] ?? 0;
-                if ($vid > 0 && IPS_VariableExists($vid)) {
-                    $this->RegisterMessage($vid, VM_UPDATE);
-                }
-            }
-        }
-        
-        // Register message for Power Sensor
         $powerId = $this->ReadPropertyInteger("SensorDehumidifierPower");
         if ($powerId > 0 && IPS_VariableExists($powerId)) {
             $this->RegisterMessage($powerId, VM_UPDATE);
         }
         
+        // Presentations (Symcon 8+)
         $iconMap = [
             'VentilationRecommendation' => 'Wind',
-            'VentilationDetails' => 'Wind',
-            'DewPointInside' => 'Drop',
-            'DewPointOutside' => 'Drop',
-            'AbsHumInside' => 'Drop',
-            'AbsHumOutside' => 'Drop',
-            'CurrentHumidity' => 'Drop',
-            'DehumidifierMaxHum' => 'Drop',
-            'DehumidifierMinHum' => 'Drop',
-            'DehumidifierStatus' => 'Drop',
-            'AlarmTankFull' => 'Warning',
-            'AlarmWindowClose' => 'Warning'
+            'VentilationDetails'        => 'Wind',
+            'DewPointInside'            => 'Drop',
+            'DewPointOutside'           => 'Drop',
+            'AbsHumInside'              => 'Drop',
+            'AbsHumOutside'             => 'Drop',
+            'CurrentHumidity'           => 'Drop',
+            'DehumidifierMaxHum'        => 'Drop',
+            'DehumidifierMinHum'        => 'Drop',
+            'DehumidifierStatus'        => 'Drop',
         ];
-        
         foreach ($iconMap as $ident => $icon) {
             if (@IPS_GetObjectIDByIdent($ident, $this->InstanceID) !== false) {
                 IPS_SetVariableCustomPresentation($this->GetIDForIdent($ident), [
@@ -202,7 +168,10 @@ class BasementClimate extends IPSModuleStrict
             }
         }
         
-        // Initial Update
+        // Alarm-Variablen via Trait (Switch mit Farben)
+        $this->SetupAlarmPresentation('AlarmTankFull',    'ALARM: Wassertank voll');
+        $this->SetupAlarmPresentation('AlarmWindowClose', 'ALARM: Fenster schließen', 'OK', 0xFF6600);
+        
         $this->UpdateClimate();
     }
     
@@ -220,7 +189,6 @@ class BasementClimate extends IPSModuleStrict
         switch ($Ident) {
             case "AlarmTankFull":
             case "AlarmWindowClose":
-                // Acknowledge the alarm (set to false)
                 if ($Value == false) {
                     $this->SetValue($Ident, false);
                     $this->UpdateClimate();
@@ -236,55 +204,36 @@ class BasementClimate extends IPSModuleStrict
         }
     }
 
-    public function UpdateClimate()
+    public function UpdateClimate(): void
     {
-        $tempOut = $this->GetVarValue("SensorTempOutside");
-        $humOut = $this->GetVarValue("SensorHumOutside");
-        $tempIn = $this->GetVarValue("SensorTempInside");
-        $humIn = $this->GetVarValue("SensorHumInside");
+        $tempOut = $this->GetPropertyVarValue("SensorTempOutside"); // Trait
+        $humOut  = $this->GetPropertyVarValue("SensorHumOutside");  // Trait
+        $tempIn  = $this->GetPropertyVarValue("SensorTempInside");  // Trait
+        $humIn   = $this->GetPropertyVarValue("SensorHumInside");   // Trait
         
-        $windowOpen = false;
-        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
-        if (is_array($windows)) {
-            foreach ($windows as $w) {
-                $vid = $w['VariableID'] ?? 0;
-                $closedVal = $w['ClosedValue'] ?? 'false';
-                if ($vid > 0 && IPS_VariableExists($vid)) {
-                    if ($this->IsWindowOpen($vid, $closedVal)) {
-                        $windowOpen = true;
-                        break;
-                    }
-                }
-            }
-        }
+        $windowOpen = $this->AnyWindowOpen(); // Trait
         
         if ($tempIn !== null && $humIn !== null) {
             $this->SetValue("CurrentHumidity", $humIn);
-            
-            // Dehumidifier Logic requires only inside sensors
             $this->ControlDehumidifier($humIn, $windowOpen);
         }
         
         if ($tempOut !== null && $humOut !== null && $tempIn !== null && $humIn !== null) {
-            // Calculate Absolute Humidity and Dew Point
             $absOut = $this->CalculateAbsoluteHumidity($tempOut, $humOut);
-            $dpOut = $this->CalculateDewPoint($tempOut, $humOut);
-            
-            $absIn = $this->CalculateAbsoluteHumidity($tempIn, $humIn);
-            $dpIn = $this->CalculateDewPoint($tempIn, $humIn);
+            $dpOut  = $this->CalculateDewPoint($tempOut, $humOut);
+            $absIn  = $this->CalculateAbsoluteHumidity($tempIn, $humIn);
+            $dpIn   = $this->CalculateDewPoint($tempIn, $humIn);
             
             $this->SetValue("AbsHumOutside", $absOut);
             $this->SetValue("DewPointOutside", $dpOut);
-            
             $this->SetValue("AbsHumInside", $absIn);
             $this->SetValue("DewPointInside", $dpIn);
             
-            // Ventilation logic
-            $threshold = $this->ReadPropertyFloat("VentilationThreshold");
+            $threshold   = $this->ReadPropertyFloat("VentilationThreshold");
             $closeMargin = $this->ReadPropertyFloat("VentilationCloseMargin");
             $recommendation = false;
-            $closeAlarm = false;
-            $details = "Keine Aktion erforderlich.";
+            $closeAlarm     = false;
+            $details        = "Keine Aktion erforderlich.";
             
             if (!$windowOpen) {
                 if ($absOut <= ($absIn - $threshold)) {
@@ -293,8 +242,7 @@ class BasementClimate extends IPSModuleStrict
                 } else {
                     $details = sprintf("Lüften lohnt nicht (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
                 }
-                // Automatically clear close alarm if window is closed
-                $this->SetValueIfChanged("AlarmWindowClose", false);
+                $this->SetValueIfChanged("AlarmWindowClose", false); // Trait
             } else {
                 if ($absOut >= ($absIn - $closeMargin)) {
                     $closeAlarm = true;
@@ -306,35 +254,33 @@ class BasementClimate extends IPSModuleStrict
                 } else {
                     $details = sprintf("Lüften trocknet weiterhin (Außen: %.2f g/m³, Innen: %.2f g/m³)", $absOut, $absIn);
                 }
-                
                 if ($closeAlarm) {
-                    $this->SetValueIfChanged("AlarmWindowClose", true);
+                    $this->SetValueIfChanged("AlarmWindowClose", true); // Trait
                 }
             }
             
-            $this->SetValueIfChanged("VentilationRecommendation", $recommendation);
-            $this->SetValueIfChanged("VentilationDetails", $details);
+            $this->SetValueIfChanged("VentilationRecommendation", $recommendation); // Trait
+            $this->SetValueIfChanged("VentilationDetails", $details);               // Trait
         }
         
-        // Heating Logic
         $this->ControlHeating($humIn);
     }
     
-    private function ControlDehumidifier($humIn, $windowOpen)
+    private function ControlDehumidifier(float $humIn, bool $windowOpen): void
     {
         $plugId = $this->ReadPropertyInteger("ActuatorDehumidifierPlug");
         if ($plugId == 0 || !IPS_VariableExists($plugId)) return;
         
-        $maxHum = $this->GetValue("DehumidifierMaxHum");
-        $minHum = $this->GetValue("DehumidifierMinHum");
+        $maxHum   = $this->GetValue("DehumidifierMaxHum");
+        $minHum   = $this->GetValue("DehumidifierMinHum");
         $tankFull = $this->GetValue("AlarmTankFull");
         
         $plugStatus = GetValue($plugId);
-        $newStatus = $plugStatus;
-        $statusText = 0; // 0=Off, 1=On, 2=Window Open, 3=Tank Full
+        $newStatus  = $plugStatus;
+        $statusText = 0; // 0=Aus, 1=Entfeuchten, 2=Fenster offen, 3=Tank voll
         
         if ($windowOpen) {
-            $newStatus = false;
+            $newStatus  = false;
             $statusText = 2;
         } else {
             if ($humIn >= $maxHum) {
@@ -344,153 +290,88 @@ class BasementClimate extends IPSModuleStrict
             } else {
                 $newStatus = $plugStatus;
             }
-            
-            if ($tankFull) {
-                $statusText = 3;
-            } else {
-                $statusText = $newStatus ? 1 : 0;
-            }
+            $statusText = $tankFull ? 3 : ($newStatus ? 1 : 0);
         }
         
         if ($plugStatus != $newStatus) {
             RequestAction($plugId, $newStatus);
         }
         
-        $this->SetValueIfChanged("DehumidifierStatus", $statusText);
-        $this->SetValueIfChanged("AlarmTankFull", $tankFull);
+        $this->SetValueIfChanged("DehumidifierStatus", $statusText); // Trait
+        $this->SetValueIfChanged("AlarmTankFull", $tankFull);        // Trait
     }
     
-    private function ControlHeating($humIn)
+    private function ControlHeating(mixed $humIn): void
     {
-        $rad1 = $this->ReadPropertyInteger("ActuatorRadiator1");
-        $rad2 = $this->ReadPropertyInteger("ActuatorRadiator2");
+        $rad1       = $this->ReadPropertyInteger("ActuatorRadiator1");
+        $rad2       = $this->ReadPropertyInteger("ActuatorRadiator2");
         $targetBase = $this->ReadPropertyFloat("TargetTemperature");
         
-        // Anti-Mold Logic: If humidity is extremely high, raise temp by 2 degrees
+        // Anti-Schimmel: Bei extrem hoher Feuchte Temperatur um 2°C anheben
         $targetTemp = $targetBase;
         if ($humIn > 70.0) {
             $targetTemp += 2.0;
         }
         
-        if ($rad1 > 0 && IPS_VariableExists($rad1)) {
-            $currentRad1 = GetValue($rad1);
-            if ($currentRad1 != $targetTemp) {
-                @RequestAction($rad1, $targetTemp);
-            }
+        if ($rad1 > 0 && IPS_VariableExists($rad1) && GetValue($rad1) != $targetTemp) {
+            @RequestAction($rad1, $targetTemp);
         }
-        
-        if ($rad2 > 0 && IPS_VariableExists($rad2)) {
-            $currentRad2 = GetValue($rad2);
-            if ($currentRad2 != $targetTemp) {
-                @RequestAction($rad2, $targetTemp);
-            }
+        if ($rad2 > 0 && IPS_VariableExists($rad2) && GetValue($rad2) != $targetTemp) {
+            @RequestAction($rad2, $targetTemp);
         }
     }
     
-    private function HandlePowerUpdate($currentPower)
+    private function HandlePowerUpdate(float $currentPower): void
     {
         $plugId = $this->ReadPropertyInteger("ActuatorDehumidifierPlug");
         if ($plugId == 0) return;
         
         $plugStatus = GetValue($plugId);
-        $threshold = $this->ReadPropertyFloat("DehumidifierPowerThreshold");
-        $timeLimit = $this->ReadPropertyInteger("DehumidifierPowerTime");
+        $threshold  = $this->ReadPropertyFloat("DehumidifierPowerThreshold");
+        $timeLimit  = $this->ReadPropertyInteger("DehumidifierPowerTime");
         
-        // We only care if the plug is logically ON
         if ($plugStatus) {
             if ($currentPower < $threshold) {
-                // If timer is not running, start it
-                $timerData = $this->GetTimerInterval("PowerCheckTimer");
-                if ($timerData == 0 && !$this->GetValue("AlarmTankFull")) {
+                // Timer nur starten, wenn nicht bereits läuft UND kein aktiver Alarm
+                if ($this->GetTimerInterval("PowerCheckTimer") == 0 && !$this->GetValue("AlarmTankFull")) {
                     $this->SetTimerInterval("PowerCheckTimer", $timeLimit * 1000);
                 }
             } else {
-                // Power is fine, stop timer
-                $this->SetTimerInterval("PowerCheckTimer", 0);
-                
-                // If tank was full, auto reset the alarm
+                $this->StopTimer("PowerCheckTimer"); // Trait
                 if ($this->GetValue("AlarmTankFull")) {
                     $this->SetValue("AlarmTankFull", false);
                     $this->UpdateClimate();
                 }
             }
         } else {
-            $this->SetTimerInterval("PowerCheckTimer", 0);
+            $this->StopTimer("PowerCheckTimer"); // Trait
         }
     }
     
-    public function CheckPowerThreshold()
+    public function CheckPowerThreshold(): void
     {
-        $this->SetTimerInterval("PowerCheckTimer", 0); // Stop timer
-        
-        // If we reach this, the power was below threshold for X seconds while the plug was ON.
+        $this->StopTimer("PowerCheckTimer"); // Trait
         $this->SetValue("AlarmTankFull", true);
-        
-        // Dehumidifier Logic will catch this on next update, let's force it
         $this->UpdateClimate();
     }
     
-    private function GetVarValue($propertyName)
+    private function CalculateDewPoint(float $t, float $rh): float
     {
-        $id = $this->ReadPropertyInteger($propertyName);
-        if ($id > 0 && IPS_VariableExists($id)) {
-            return GetValue($id);
-        }
-        return null;
-    }
-    
-    private function IsWindowOpen($vid, $closedValue)
-    {
-        $currentVal = GetValue($vid);
-        $isClosed = false;
-        
-        if (is_bool($currentVal)) {
-            $targetBool = ($closedValue === 'true'|| $closedValue === '1'|| strtolower((string)$closedValue) === 'wahr');
-            $isClosed = ($currentVal === $targetBool);
-        } else {
-            $isClosed = ((string)$currentVal === (string)$closedValue);
-        }
-        
-        return !$isClosed;
-    }
-    
-    private function CalculateDewPoint($t, $rh)
-    {
-        if ($t < 0) {
-            $a = 7.6; $b = 240.7;
-        } else {
-            $a = 7.5; $b = 237.3;
-        }
+        $a = ($t < 0) ? 7.6 : 7.5;
+        $b = ($t < 0) ? 240.7 : 237.3;
         $sdd = 6.1078 * pow(10, ($a * $t) / ($b + $t));
-        $dd = $sdd * ($rh / 100);
-        $v = log10($dd / 6.1078);
+        $dd  = $sdd * ($rh / 100);
+        $v   = log10($dd / 6.1078);
         return ($b * $v) / ($a - $v);
     }
     
-    private function CalculateAbsoluteHumidity($t, $rh)
+    private function CalculateAbsoluteHumidity(float $t, float $rh): float
     {
-        if ($t < 0) {
-            $a = 7.6; $b = 240.7;
-        } else {
-            $a = 7.5; $b = 237.3;
-        }
+        $a = ($t < 0) ? 7.6 : 7.5;
+        $b = ($t < 0) ? 240.7 : 237.3;
         $sdd = 6.1078 * pow(10, ($a * $t) / ($b + $t));
-        $dd = $sdd * ($rh / 100);
+        $dd  = $sdd * ($rh / 100);
         return 100000 * 18.016 / 8314.3 * $dd / ($t + 273.15);
-    }
-    
-    private function SetValueIfChanged($Ident, $Value)
-    {
-        $id = $this->GetIDForIdent($Ident);
-        if (GetValue($id) !== $Value) {
-            SetValue($id, $Value);
-        }
-    }
-
-    protected function LogMessage(string $Message, int $Type): bool
-    {
-        IPS_LogMessage('SmartVillaKunterbunt', 'BasementClimate: '. $Message);
-        return true;
     }
 
     public function GetConfigurationForm(): string
@@ -635,5 +516,3 @@ class BasementClimate extends IPSModuleStrict
 EOT;
     }
 }
-
-

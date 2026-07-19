@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../ClimateCommon.php';
+
 class FireplaceSafety extends IPSModuleStrict
 {
+    use ClimateCommon;
+
     public function Create(): void{
         parent::Create();
 
@@ -60,75 +64,52 @@ class FireplaceSafety extends IPSModuleStrict
         if ($ref_ActuatorHood > 1 && @IPS_ObjectExists($ref_ActuatorHood)) {
             $this->RegisterReference($ref_ActuatorHood);
         }
-        $list_SensorWindows = json_decode($this->ReadPropertyString('SensorWindows'), true);
-        if (is_array($list_SensorWindows)) {
-            foreach ($list_SensorWindows as $item) {
-                $vid = $item['VariableID'] ?? 0;
-                if ($vid > 1 && @IPS_ObjectExists($vid)) {
-                    $this->RegisterReference($vid);
-                }
-            }
-        }
+        $this->RegisterWindowReferences(); // Trait
         // ---------------------------------
 
-        // Symcon 8 Custom Presentations
+        // Presentations (Symcon 8+)
         if (function_exists('IPS_SetVariableCustomPresentation')) {
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('CurrentDeltaTemp'), ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
             IPS_SetVariableCustomPresentation($this->GetIDForIdent('CurrentDoorStatus'), ['ICON' => 'Window']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmOvenDoor'), ['ICON' => 'Warning']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenPeakTemp'), ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('WoodRefillNeeded'), ['ICON' => 'Warning']);
-            
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenStatus'), ['ICON' => 'Flame']);
-            IPS_SetVariableCustomPresentation($this->GetIDForIdent('HoodStatus'), ['ICON' => 'Information']);
+            IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenPeakTemp'),     ['ICON' => 'Temperature', 'SUFFIX' => ' °C']);
+            IPS_SetVariableCustomPresentation($this->GetIDForIdent('OvenStatus'),        ['ICON' => 'Flame']);
+            IPS_SetVariableCustomPresentation($this->GetIDForIdent('HoodStatus'),        ['ICON' => 'Information']);
         }
+        // Alarm-Variablen via Trait (Switch mit Farben)
+        $this->SetupAlarmPresentation('AlarmOvenDoor',     'ALARM: Ofentür offen!');
+        $this->SetupAlarmPresentation('WoodRefillNeeded',  'Bitte Holz nachlegen', 'Genug Holz', 0xFF9900);
 
         // --- Custom Profiles ---
         if (!IPS_VariableProfileExists('SmartClimate.OvenStatus')) {
-            IPS_CreateVariableProfile('SmartClimate.OvenStatus', 0); // Boolean
+            IPS_CreateVariableProfile('SmartClimate.OvenStatus', 0);
             IPS_SetVariableProfileAssociation('SmartClimate.OvenStatus', false, 'Aus', 'Flame', -1);
             IPS_SetVariableProfileAssociation('SmartClimate.OvenStatus', true, 'Brennt', 'Flame', 0xFF0000);
         }
         IPS_SetVariableCustomProfile($this->GetIDForIdent('OvenStatus'), 'SmartClimate.OvenStatus');
 
         if (!IPS_VariableProfileExists('SmartClimate.HoodStatus')) {
-            IPS_CreateVariableProfile('SmartClimate.HoodStatus', 0); // Boolean
+            IPS_CreateVariableProfile('SmartClimate.HoodStatus', 0);
             IPS_SetVariableProfileAssociation('SmartClimate.HoodStatus', false, 'Gesperrt', 'Lock', 0xFF0000);
             IPS_SetVariableProfileAssociation('SmartClimate.HoodStatus', true, 'Freigegeben', 'Unlock', 0x00FF00);
         }
         IPS_SetVariableCustomProfile($this->GetIDForIdent('HoodStatus'), 'SmartClimate.HoodStatus');
 
+        // Messages neu registrieren (Trait)
+        $this->UnregisterAllMessages();
 
-        // Clear all previous message registrations
-        foreach ($this->GetMessageList() as $senderID => $messages) {
-            foreach ($messages as $message) {
-                $this->UnregisterMessage($senderID, $message);
-            }
-        }
-
-        // Register Sensor Messages
         $ovenTemp = $this->ReadPropertyInteger("SensorOvenTemp");
         if ($ovenTemp > 0 && IPS_VariableExists($ovenTemp)) {
             $this->RegisterMessage($ovenTemp, VM_UPDATE);
         }
-
         $roomTemp = $this->ReadPropertyInteger("SensorRoomTemp");
         if ($roomTemp > 0 && IPS_VariableExists($roomTemp)) {
             $this->RegisterMessage($roomTemp, VM_UPDATE);
         }
-
         $ovenDoor = $this->ReadPropertyInteger("SensorOvenDoor");
         if ($ovenDoor > 0 && IPS_VariableExists($ovenDoor)) {
             $this->RegisterMessage($ovenDoor, VM_UPDATE);
         }
-
-        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true) ?: [];
-        foreach ($windows as $win) {
-            $vid = $win['VariableID'] ?? 0;
-            if ($vid > 0 && IPS_VariableExists($vid)) {
-                $this->RegisterMessage($vid, VM_UPDATE);
-            }
-        }
+        $this->RegisterWindowMessages(); // Trait
 
         // Initial update
         $this->UpdateSafety();
@@ -141,7 +122,6 @@ class FireplaceSafety extends IPSModuleStrict
     public function RequestAction(string $Ident, $Value): void{
         switch ($Ident) {
             case "AlarmOvenDoor":
-                // Quittierung des Ofentür-Alarms
                 if ($Value == false) {
                     $this->SetValue($Ident, false);
                     $this->UpdateSafety();
@@ -152,98 +132,69 @@ class FireplaceSafety extends IPSModuleStrict
         }
     }
 
-    public function TriggerDoorAlarm()
+    public function TriggerDoorAlarm(): void
     {
-        // Wird aufgerufen, wenn der Timer abläuft
-        $this->SetTimerInterval("DoorAlarmTimer", 0);
-        $this->SetValueIfChanged("AlarmOvenDoor", true);
+        $this->StopTimer("DoorAlarmTimer"); // Trait
+        $this->SetValueIfChanged("AlarmOvenDoor", true); // Trait
         $this->SendDebug("Timer", "Ofentür-Alarm ausgelöst!", 0);
     }
 
-    private function SetValueIfChanged(string $Ident, $Value)
-    {
-        if ($this->GetValue($Ident) !== $Value) {
-            $this->SetValue($Ident, $Value);
-        }
-    }
-
-    private function UpdateSafety()
+    private function UpdateSafety(): void
     {
         $ovenTempId = $this->ReadPropertyInteger("SensorOvenTemp");
         $roomTempId = $this->ReadPropertyInteger("SensorRoomTemp");
         
         $isOvenOn = false;
         
-        // --- 1. Temperatur- & Peak-Logik auswerten ---
+        // --- 1. Temperatur- & Peak-Logik ---
         if ($ovenTempId > 0 && IPS_VariableExists($ovenTempId) && $roomTempId > 0 && IPS_VariableExists($roomTempId)) {
-            $tOven = GetValue($ovenTempId);
-            $tRoom = GetValue($roomTempId);
+            $tOven        = (float)GetValue($ovenTempId);
+            $tRoom        = (float)GetValue($roomTempId);
             $deltaSetting = $this->ReadPropertyFloat("OvenDeltaTemp");
             
             $currentDelta = $tOven - $tRoom;
-            $this->SetValueIfChanged("CurrentDeltaTemp", $currentDelta);
+            $this->SetValueIfChanged("CurrentDeltaTemp", $currentDelta); // Trait
             
             if ($currentDelta >= $deltaSetting) {
                 $isOvenOn = true;
             }
 
-            // Peak tracking und "Nachlegen"-Logik
+            // Peak-Tracking und "Nachlegen"-Logik
             $refillNeeded = false;
             if ($isOvenOn) {
-                $peak = $this->GetValue("OvenPeakTemp");
+                $peak = (float)$this->GetValue("OvenPeakTemp");
                 if ($tOven > $peak) {
-                    // Neuer Peak erreicht
                     $peak = $tOven;
                     $this->SetValue("OvenPeakTemp", $peak);
                 }
-                
-                // Wenn Temperatur vom Peak um Threshold abfällt, ist es Zeit nachzulegen...
                 if ($peak > 0 && $tOven <= ($peak - $this->ReadPropertyFloat("PeakDropThreshold"))) {
-                    // ...außer der Raum ist ohnehin schon wärmer als MaxRoomTemp
                     if ($tRoom < $this->ReadPropertyFloat("MaxRoomTemp")) {
                         $refillNeeded = true;
                     }
                 }
             } else {
-                $this->SetValueIfChanged("OvenPeakTemp", 0.0);
+                $this->SetValueIfChanged("OvenPeakTemp", 0.0); // Trait
             }
-            $this->SetValueIfChanged("WoodRefillNeeded", $refillNeeded);
+            $this->SetValueIfChanged("WoodRefillNeeded", $refillNeeded); // Trait
         } else {
-            // Sensoren fehlen oder ungültig
-            $this->SetValueIfChanged("OvenPeakTemp", 0.0);
-            $this->SetValueIfChanged("WoodRefillNeeded", false);
+            $this->SetValueIfChanged("OvenPeakTemp", 0.0);    // Trait
+            $this->SetValueIfChanged("WoodRefillNeeded", false); // Trait
         }
-        $this->SetValueIfChanged("OvenStatus", $isOvenOn);
+        $this->SetValueIfChanged("OvenStatus", $isOvenOn); // Trait
 
-        // --- 2. Fenster-Sensoren auswerten ---
-        $anyWindowOpen = false;
-        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true) ?: [];
-        foreach ($windows as $win) {
-            $vid = $win['VariableID'] ?? 0;
-            $closedValStr = $win['ClosedValue'] ?? "false";
-            
-            if ($vid > 0 && IPS_VariableExists($vid)) {
-                $currentVal = GetValue($vid);
-                if (!$this->IsTriggered($currentVal, $closedValStr)) {
-                    $anyWindowOpen = true;
-                    break;
-                }
-            }
-        }
+        // --- 2. Fenster-Sensoren (Trait: AnyWindowOpen) ---
+        $anyWindowOpen = $this->AnyWindowOpen();
 
-        // --- 3. Ofentür auswerten ---
+        // --- 3. Ofentür auswerten (Trait: IsWindowOpen) ---
         $isDoorOpen = false;
         $ovenDoorId = $this->ReadPropertyInteger("SensorOvenDoor");
         if ($ovenDoorId > 0 && IPS_VariableExists($ovenDoorId)) {
-            $doorVal = GetValue($ovenDoorId);
             $doorClosedValStr = $this->ReadPropertyString("OvenDoorClosedValue");
-            if (!$this->IsTriggered($doorVal, $doorClosedValStr)) {
-                $isDoorOpen = true;
-            }
+            $isDoorOpen = $this->IsWindowOpen($ovenDoorId, $doorClosedValStr); // Trait
         }
-        $this->SetValueIfChanged("CurrentDoorStatus", $isDoorOpen);
+        $this->SetValueIfChanged("CurrentDoorStatus", $isDoorOpen); // Trait
 
-        // Tür-Alarm Logik (Startet, wenn Tür auf und Ofen brennt)
+        // Tür-Alarm-Logik
         if ($isOvenOn && $isDoorOpen) {
             if ($this->GetTimerInterval("DoorAlarmTimer") == 0 && !$this->GetValue("AlarmOvenDoor")) {
                 $delay = $this->ReadPropertyInteger("DoorAlarmTime");
@@ -252,7 +203,7 @@ class FireplaceSafety extends IPSModuleStrict
             }
         } else {
             if ($this->GetTimerInterval("DoorAlarmTimer") > 0) {
-                $this->SetTimerInterval("DoorAlarmTimer", 0);
+                $this->StopTimer("DoorAlarmTimer"); // Trait
                 $this->SendDebug("Timer", "Ofentür geschlossen oder Ofen aus, Timer gestoppt", 0);
             }
             if ($this->GetValue("AlarmOvenDoor")) {
@@ -260,51 +211,23 @@ class FireplaceSafety extends IPSModuleStrict
             }
         }
 
-        // --- 4. Dunstabzugshauben Sicherheits-Logik ---
-        // Haube darf nur an sein, wenn der Ofen aus ist ODER ein Fenster geöffnet ist.
-        $allowHood = true;
-        if ($isOvenOn && !$anyWindowOpen) {
-            $allowHood = false;
-        }
+        // --- 4. Dunstabzugshaube Sicherheits-Logik ---
+        // Haube darf nur an, wenn Ofen aus ODER ein Fenster offen (Zuluft vorhanden)
+        $allowHood = !($isOvenOn && !$anyWindowOpen);
         $this->SetValue("HoodStatus", $allowHood);
 
         $actuatorId = $this->ReadPropertyInteger("ActuatorHood");
         if ($actuatorId > 0 && IPS_VariableExists($actuatorId)) {
-            $currentPlug = GetValue($actuatorId);
-            
-            // Cast auf bool, um sicheren Vergleich zu haben
-            $currentPlugBool = (bool)$currentPlug;
-            
-            if ($currentPlugBool !== $allowHood) {
-                $this->SendDebug("Actuator", "Schalte Dunstabzugshaube: ". ($allowHood ? "AN": "AUS"), 0);
+            $currentPlug = (bool)GetValue($actuatorId);
+            if ($currentPlug !== $allowHood) {
+                $this->SendDebug("Actuator", "Schalte Dunstabzugshaube: " . ($allowHood ? "AN" : "AUS"), 0);
                 try {
                     RequestAction($actuatorId, $allowHood);
                 } catch (\Throwable $e) {
-                    $this->LogMessage("Fehler beim Schalten der Dunstabzugshaube (ID $actuatorId): ". $e->getMessage(), KL_ERROR);
+                    $this->LogMessage("Fehler beim Schalten der Dunstabzugshaube (ID $actuatorId): " . $e->getMessage(), KL_ERROR);
                 }
             }
         }
-    }
-
-    private function IsTriggered($currentVal, $triggerValStr)
-    {
-        if (is_bool($currentVal)) {
-            $t = strtolower(trim($triggerValStr));
-            $triggerBool = ($t === 'true'|| $t === '1');
-            return $currentVal === $triggerBool;
-        }
-
-        if (is_int($currentVal) || is_float($currentVal)) {
-            return $currentVal == (float)$triggerValStr;
-        }
-
-        return (string)$currentVal === $triggerValStr;
-    }
-
-    protected function LogMessage(string $Message, int $Type): bool
-    {
-        IPS_LogMessage('SmartVillaKunterbunt', 'FireplaceSafety: '. $Message);
-        return true;
     }
 
     public function GetConfigurationForm(): string

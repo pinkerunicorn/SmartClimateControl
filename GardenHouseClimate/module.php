@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../ClimateCommon.php';
+
 class GardenHouseClimate extends IPSModuleStrict
 {
+    use ClimateCommon;
+
     public function Create(): void{
         parent::Create();
 
@@ -44,7 +48,7 @@ class GardenHouseClimate extends IPSModuleStrict
         }
         IPS_SetVariableCustomProfile($this->GetIDForIdent('HeaterStatus'), 'SmartClimate.HeaterStatus');
         
-        // Alarms (Require Acknowledge) — no legacy profile, use CustomPresentation
+        // Alarms (no legacy profiles — use CustomPresentation via Trait)
         $this->RegisterVariableBoolean("AlarmHeaterDefect", "Alarm: Heizung defekt", "");
         IPS_SetIcon($this->GetIDForIdent('AlarmHeaterDefect'), 'Warning');
         $this->EnableAction("AlarmHeaterDefect");
@@ -84,15 +88,7 @@ class GardenHouseClimate extends IPSModuleStrict
         if ($ref_SensorHeaterPower > 1 && @IPS_ObjectExists($ref_SensorHeaterPower)) {
             $this->RegisterReference($ref_SensorHeaterPower);
         }
-        $list_SensorWindows = json_decode($this->ReadPropertyString('SensorWindows'), true);
-        if (is_array($list_SensorWindows)) {
-            foreach ($list_SensorWindows as $item) {
-                $vid = $item['VariableID'] ?? 0;
-                if ($vid > 1 && @IPS_ObjectExists($vid)) {
-                    $this->RegisterReference($vid);
-                }
-            }
-        }
+        $this->RegisterWindowReferences(); // Trait
         // ---------------------------------
 
         // Presentations (Symcon 8+)
@@ -101,60 +97,21 @@ class GardenHouseClimate extends IPSModuleStrict
             'ICON'         => 'Gear'
         ]);
 
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmHeaterDefect'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-            'ICON'         => 'Warning',
-            'ONCOLOR'      => 0xFF0000,
-            'OFFCOLOR'     => 0x00FF00,
-            'ONCAPTION'    => 'ALARM: Heizung defekt',
-            'OFFCAPTION'   => 'OK'
-        ]);
+        // Alarm-Variablen via Trait (Switch mit Farben)
+        $this->SetupAlarmPresentation('AlarmHeaterDefect', 'ALARM: Heizung defekt');
+        $this->SetupAlarmPresentation('AlarmFrost',        'ALARM: Kritischer Frost');
+        $this->SetupAlarmPresentation('AlarmWindowOpen',   'ALARM: Fenster offen (Winter)', 'OK', 0xFF6600);
 
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmFrost'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-            'ICON'         => 'Warning',
-            'ONCOLOR'      => 0xFF0000,
-            'OFFCOLOR'     => 0x00FF00,
-            'ONCAPTION'    => 'ALARM: Kritischer Frost',
-            'OFFCAPTION'   => 'OK'
-        ]);
-
-        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AlarmWindowOpen'), [
-            'PRESENTATION' => VARIABLE_PRESENTATION_SWITCH,
-            'ICON'         => 'Warning',
-            'ONCOLOR'      => 0xFF6600,
-            'OFFCOLOR'     => 0x00FF00,
-            'ONCAPTION'    => 'ALARM: Fenster offen (Winter)',
-            'OFFCAPTION'   => 'OK'
-        ]);
-
-        // Unregister old messages
-        foreach ($this->GetMessageList() as $senderID => $messages) {
-            foreach ($messages as $message) {
-                $this->UnregisterMessage($senderID, $message);
-            }
-        }
+        // Messages neu registrieren (Trait)
+        $this->UnregisterAllMessages();
         
-        $sensors = [
-            "SensorTempInside", "SensorTempOutside"
-        ];
-        
-        foreach ($sensors as $sensorName) {
+        foreach (["SensorTempInside", "SensorTempOutside"] as $sensorName) {
             $id = $this->ReadPropertyInteger($sensorName);
             if ($id > 0 && IPS_VariableExists($id)) {
                 $this->RegisterMessage($id, VM_UPDATE);
             }
         }
-        
-        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
-        if (is_array($windows)) {
-            foreach ($windows as $w) {
-                $vid = $w['VariableID'] ?? 0;
-                if ($vid > 0 && IPS_VariableExists($vid)) {
-                    $this->RegisterMessage($vid, VM_UPDATE);
-                }
-            }
-        }
+        $this->RegisterWindowMessages(); // Trait
         
         $powerId = $this->ReadPropertyInteger("SensorHeaterPower");
         if ($powerId > 0 && IPS_VariableExists($powerId)) {
@@ -166,38 +123,14 @@ class GardenHouseClimate extends IPSModuleStrict
     
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void{
         $powerId = $this->ReadPropertyInteger("SensorHeaterPower");
-        $isWindow = false;
-        
-        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
-        if (is_array($windows)) {
-            foreach ($windows as $w) {
-                if (($w['VariableID'] ?? 0) == $SenderID) {
-                    $isWindow = true;
-                    break;
-                }
-            }
-        }
         
         if ($SenderID == $powerId) {
-            $this->HandlePowerUpdate($Data[0]);
-        } elseif ($isWindow) {
-            // Check if any window is open
-            $windowOpen = false;
-            if (is_array($windows)) {
-                foreach ($windows as $w) {
-                    $vid = $w['VariableID'] ?? 0;
-                    $closedVal = $w['ClosedValue'] ?? 'false';
-                    if ($vid > 0 && IPS_VariableExists($vid)) {
-                        if ($this->IsWindowOpen($vid, $closedVal)) {
-                            $windowOpen = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            $this->HandleWindowUpdate($windowOpen);
+            $this->HandlePowerUpdate((float)$Data[0]);
+        } elseif ($this->AnyWindowOpen()) { // Trait: recheck window state
+            $this->HandleWindowUpdate(true);
             $this->UpdateClimate();
         } else {
+            $this->HandleWindowUpdate(false);
             $this->UpdateClimate();
         }
     }
@@ -225,52 +158,38 @@ class GardenHouseClimate extends IPSModuleStrict
         }
     }
 
-    public function UpdateClimate()
+    public function UpdateClimate(): void
     {
         $winterMode = $this->GetValue("WinterMode");
         if (!$winterMode) {
             $this->SetHeater(false, 0); // Off (Summer)
-            $this->SetTimerInterval("HeaterDefectTimer", 0);
-            $this->SetTimerInterval("WindowOpenTimer", 0);
+            $this->StopTimer("HeaterDefectTimer"); // Trait
+            $this->StopTimer("WindowOpenTimer");   // Trait
             return;
         }
         
-        $tempIn = $this->GetVarValue("SensorTempInside");
-        $tempOut = $this->GetVarValue("SensorTempOutside");
+        $tempIn  = $this->GetPropertyVarValue("SensorTempInside");  // Trait
+        $tempOut = $this->GetPropertyVarValue("SensorTempOutside"); // Trait
         
-        $windowOpen = false;
-        $windows = json_decode($this->ReadPropertyString("SensorWindows"), true);
-        if (is_array($windows)) {
-            foreach ($windows as $w) {
-                $vid = $w['VariableID'] ?? 0;
-                $closedVal = $w['ClosedValue'] ?? 'false';
-                if ($vid > 0 && IPS_VariableExists($vid)) {
-                    if ($this->IsWindowOpen($vid, $closedVal)) {
-                        $windowOpen = true;
-                        break;
-                    }
-                }
-            }
-        }
+        $windowOpen = $this->AnyWindowOpen(); // Trait
         
         if ($tempIn === null) return;
         
-        // Check Frost Alarm
+        // Frost-Alarm
         $frostWarn = $this->ReadPropertyFloat("FrostWarningTemp");
         if ($tempIn <= $frostWarn) {
             $this->SetValue("AlarmFrost", true);
         }
         
-        // Window check: if open, turn off heater to save energy
         if ($windowOpen) {
-            $this->SetHeater(false, 2); // Off (Window Open)
+            $this->SetHeater(false, 2); // Off (Fenster offen)
             return;
         }
         
-        // Target Temp & Vorsteuerung
+        // Zieltemperatur mit Vorsteuerung bei starkem Außenfrost
         $targetTemp = $this->GetValue("TargetTemperature");
         if ($tempOut !== null && $tempOut <= -5.0) {
-            $targetTemp += 1.0; // Puffer bei starkem Frost
+            $targetTemp += 1.0;
         }
         
         $hysteresis = $this->ReadPropertyFloat("Hysteresis");
@@ -278,36 +197,34 @@ class GardenHouseClimate extends IPSModuleStrict
         $plugId = $this->ReadPropertyInteger("ActuatorHeaterPlug");
         if ($plugId == 0 || !IPS_VariableExists($plugId)) return;
         
-        $plugStatus = GetValue($plugId);
+        $plugStatus = (bool)GetValue($plugId);
         
         if ($tempIn < ($targetTemp - ($hysteresis / 2))) {
             $this->SetHeater(true, 1);
         } elseif ($tempIn > ($targetTemp + ($hysteresis / 2))) {
             $this->SetHeater(false, 0);
         } else {
-            // Keep current status
             $this->SetValue("HeaterStatus", $plugStatus ? 1 : 0);
         }
     }
     
-    private function SetHeater($state, $statusText)
+    private function SetHeater(bool $state, int $statusText): void
     {
         $plugId = $this->ReadPropertyInteger("ActuatorHeaterPlug");
         if ($plugId == 0 || !IPS_VariableExists($plugId)) return;
         
-        $plugStatus = GetValue($plugId);
-        if ($plugStatus != $state) {
+        $plugStatus = (bool)GetValue($plugId);
+        if ($plugStatus !== $state) {
             RequestAction($plugId, $state);
         }
         $this->SetValue("HeaterStatus", $statusText);
         
-        // If we turned it off, stop defect timer
         if (!$state) {
-            $this->SetTimerInterval("HeaterDefectTimer", 0);
+            $this->StopTimer("HeaterDefectTimer"); // Trait
         }
     }
     
-    private function HandlePowerUpdate($currentPower)
+    private function HandlePowerUpdate(float $currentPower): void
     {
         $winterMode = $this->GetValue("WinterMode");
         if (!$winterMode) return;
@@ -315,32 +232,30 @@ class GardenHouseClimate extends IPSModuleStrict
         $plugId = $this->ReadPropertyInteger("ActuatorHeaterPlug");
         if ($plugId == 0) return;
         
-        $plugStatus = GetValue($plugId);
-        $threshold = $this->ReadPropertyFloat("HeaterPowerThreshold");
-        $timeLimit = $this->ReadPropertyInteger("HeaterDefectTime");
+        $plugStatus = (bool)GetValue($plugId);
+        $threshold  = $this->ReadPropertyFloat("HeaterPowerThreshold");
+        $timeLimit  = $this->ReadPropertyInteger("HeaterDefectTime");
         
         if ($plugStatus) {
             if ($currentPower < $threshold) {
-                // Heater is logically ON but draws no power -> Defect?
-                $timerData = $this->GetTimerInterval("HeaterDefectTimer");
-                if ($timerData == 0) {
+                if ($this->GetTimerInterval("HeaterDefectTimer") == 0) {
                     $this->SetTimerInterval("HeaterDefectTimer", $timeLimit * 1000);
                 }
             } else {
-                $this->SetTimerInterval("HeaterDefectTimer", 0);
+                $this->StopTimer("HeaterDefectTimer"); // Trait
             }
         } else {
-            $this->SetTimerInterval("HeaterDefectTimer", 0);
+            $this->StopTimer("HeaterDefectTimer"); // Trait
         }
     }
     
-    public function TriggerHeaterDefectAlarm()
+    public function TriggerHeaterDefectAlarm(): void
     {
-        $this->SetTimerInterval("HeaterDefectTimer", 0);
+        $this->StopTimer("HeaterDefectTimer"); // Trait
         $this->SetValue("AlarmHeaterDefect", true);
     }
     
-    private function HandleWindowUpdate($isOpen)
+    private function HandleWindowUpdate(bool $isOpen): void
     {
         $winterMode = $this->GetValue("WinterMode");
         if (!$winterMode) return;
@@ -348,46 +263,16 @@ class GardenHouseClimate extends IPSModuleStrict
         $timeLimit = $this->ReadPropertyInteger("WindowOpenTime");
         
         if ($isOpen) {
-            $this->SetTimerInterval("WindowOpenTimer", $timeLimit * 1000);
+            $this->StartTimerOnce("WindowOpenTimer", $timeLimit); // Trait
         } else {
-            $this->SetTimerInterval("WindowOpenTimer", 0);
+            $this->StopTimer("WindowOpenTimer"); // Trait
         }
     }
     
-    public function TriggerWindowOpenAlarm()
+    public function TriggerWindowOpenAlarm(): void
     {
-        $this->SetTimerInterval("WindowOpenTimer", 0);
+        $this->StopTimer("WindowOpenTimer"); // Trait
         $this->SetValue("AlarmWindowOpen", true);
-    }
-    
-    private function GetVarValue($propertyName)
-    {
-        $id = $this->ReadPropertyInteger($propertyName);
-        if ($id > 0 && IPS_VariableExists($id)) {
-            return GetValue($id);
-        }
-        return null;
-    }
-    
-    private function IsWindowOpen($vid, $closedValue)
-    {
-        $currentVal = GetValue($vid);
-        $isClosed = false;
-        
-        if (is_bool($currentVal)) {
-            $targetBool = ($closedValue === 'true' || $closedValue === '1' || strtolower((string)$closedValue) === 'wahr');
-            $isClosed = ($currentVal === $targetBool);
-        } else {
-            $isClosed = ((string)$currentVal === (string)$closedValue);
-        }
-        
-        return !$isClosed;
-    }
-
-    protected function LogMessage(string $Message, int $Type): bool
-    {
-        IPS_LogMessage('SmartVillaKunterbunt', 'GardenHouseClimate: '. $Message);
-        return true;
     }
 
     public function GetConfigurationForm(): string
