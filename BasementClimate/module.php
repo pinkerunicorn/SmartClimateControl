@@ -389,25 +389,6 @@ class BasementClimate extends IPSModuleStrict
         $this->SetValue("AlarmTankFull", true);
         $this->UpdateClimate();
     }
-    
-    private function CalculateDewPoint(float $t, float $rh): float
-    {
-        $a = ($t < 0) ? 7.6 : 7.5;
-        $b = ($t < 0) ? 240.7 : 237.3;
-        $sdd = 6.1078 * pow(10, ($a * $t) / ($b + $t));
-        $dd  = $sdd * ($rh / 100);
-        $v   = log10($dd / 6.1078);
-        return ($b * $v) / ($a - $v);
-    }
-    
-    private function CalculateAbsoluteHumidity(float $t, float $rh): float
-    {
-        $a = ($t < 0) ? 7.6 : 7.5;
-        $b = ($t < 0) ? 240.7 : 237.3;
-        $sdd = 6.1078 * pow(10, ($a * $t) / ($b + $t));
-        $dd  = $sdd * ($rh / 100);
-        return 100000 * 18.016 / 8314.3 * $dd / ($t + 273.15);
-    }
 
     public function GetConfigurationForm(): string
     {
