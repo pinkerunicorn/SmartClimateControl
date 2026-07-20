@@ -223,6 +223,9 @@ class GardenHouseClimate extends IPSModuleStrict
         
         $plugStatus = (bool)GetValue($plugId);
         if ($plugStatus !== $state) {
+            $tempIn = $this->GetPropertyVarValue("SensorTempInside");
+            $targetTemp = $this->GetValue("TargetTemperature");
+            $this->SLog('INFO', 'Heizung ' . ($state ? 'eingeschaltet' : 'ausgeschaltet'), 'Innentemperatur: ' . $tempIn . '°C | Zieltemperatur: ' . $targetTemp . '°C');
             if (!@RequestAction($plugId, $state)) {
                 $this->SLog('WARNING', 'Heizungsbefehl fehlgeschlagen', "Heater Plug ID: $plugId | Ziel: " . ($state ? 'An' : 'Aus'));
             }

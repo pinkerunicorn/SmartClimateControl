@@ -220,6 +220,7 @@ class FireplaceSafety extends IPSModuleStrict
         if ($actuatorId > 0 && IPS_VariableExists($actuatorId)) {
             $currentPlug = (bool)GetValue($actuatorId);
             if ($currentPlug !== $allowHood) {
+                $this->SLog('INFO', 'Dunstabzugshaube ' . ($allowHood ? 'freigegeben' : 'gesperrt'), 'Ofen an: ' . ($isOvenOn ? 'Ja' : 'Nein') . ' | Fenster offen: ' . ($anyWindowOpen ? 'Ja' : 'Nein'));
                 $this->SendDebug("Actuator", "Schalte Dunstabzugshaube: " . ($allowHood ? "AN" : "AUS"), 0);
                 if (!@RequestAction($actuatorId, $allowHood)) {
                     $this->SLog('WARNING', 'Haubenbefehl fehlgeschlagen', "Actuator ID: $actuatorId | Ziel: " . ($allowHood ? 'An' : 'Aus'));
