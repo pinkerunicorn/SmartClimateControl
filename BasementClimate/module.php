@@ -40,31 +40,76 @@ class BasementClimate extends IPSModuleStrict
             IPS_SetVariableProfileAssociation('SmartClimate.VentilationRecommendation', true, 'Lüften!', '', -1);
         }
         $this->RegisterVariableBoolean("VentilationRecommendation", "Lüften empfohlen!", "SmartClimate.VentilationRecommendation");
-        $this->RegisterVariableString("VentilationDetails", "Hinweis");
-        IPS_SetIcon($this->GetIDForIdent('VentilationDetails'), 'Wind');
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('VentilationRecommendation'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'         => 'Wind'
+        ]);
+        $this->RegisterVariableString("VentilationDetails", "Hinweis", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('VentilationDetails'), [
+            'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'         => 'Wind'
+        ]);
         
-        $this->RegisterVariableFloat("DewPointInside", "Taupunkt Keller", "~Temperature");
-        IPS_SetIcon($this->GetIDForIdent('DewPointInside'), 'Drop');
-        $this->RegisterVariableFloat("DewPointOutside", "Taupunkt Außen", "~Temperature");
-        IPS_SetIcon($this->GetIDForIdent('DewPointOutside'), 'Drop');
+        $this->RegisterVariableFloat("DewPointInside", "Taupunkt Keller", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('DewPointInside'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops',
+            'SUFFIX'        => ' °C',
+            'DECIMALPLACES' => 1
+        ]);
+        $this->RegisterVariableFloat("DewPointOutside", "Taupunkt Außen", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('DewPointOutside'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops',
+            'SUFFIX'        => ' °C',
+            'DECIMALPLACES' => 1
+        ]);
         
         $this->RegisterVariableFloat("AbsHumInside", "Absolute Feuchte Keller", "");
-        IPS_SetIcon($this->GetIDForIdent('AbsHumInside'), 'Drop');
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AbsHumInside'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops',
+            'SUFFIX'        => ' g/m³',
+            'DECIMALPLACES' => 2
+        ]);
         $this->RegisterVariableFloat("AbsHumOutside", "Absolute Feuchte Außen", "");
-        IPS_SetIcon($this->GetIDForIdent('AbsHumOutside'), 'Drop');
-        $this->RegisterVariableFloat("CurrentHumidity", "Aktuelle Luftfeuchtigkeit", "~Humidity.F");
-        IPS_SetIcon($this->GetIDForIdent('CurrentHumidity'), 'Drop');
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('AbsHumOutside'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops',
+            'SUFFIX'        => ' g/m³',
+            'DECIMALPLACES' => 2
+        ]);
+        $this->RegisterVariableFloat("CurrentHumidity", "Aktuelle Luftfeuchtigkeit", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('CurrentHumidity'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops',
+            'SUFFIX'        => ' %',
+            'DECIMALPLACES' => 1
+        ]);
         
-        $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "BC.HumThreshold");
-        IPS_SetIcon($this->GetIDForIdent('DehumidifierMaxHum'), 'Drop');
+        $this->RegisterVariableFloat("DehumidifierMaxHum", "Einschaltschwelle (Max %)", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('DehumidifierMaxHum'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops',
+            'SUFFIX'        => ' %',
+            'DECIMALPLACES' => 1
+        ]);
         $this->EnableAction("DehumidifierMaxHum");
         
-        $this->RegisterVariableFloat("DehumidifierMinHum", "Ausschaltschwelle (Min %)", "BC.HumThreshold");
-        IPS_SetIcon($this->GetIDForIdent('DehumidifierMinHum'), 'Drop');
+        $this->RegisterVariableFloat("DehumidifierMinHum", "Ausschaltschwelle (Min %)", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('DehumidifierMinHum'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops',
+            'SUFFIX'        => ' %',
+            'DECIMALPLACES' => 1
+        ]);
         $this->EnableAction("DehumidifierMinHum");
         
-        $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "BC.DehumidifierStatus");
-        IPS_SetIcon($this->GetIDForIdent('DehumidifierStatus'), 'Drop');
+        $this->RegisterVariableInteger("DehumidifierStatus", "Status Entfeuchter", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('DehumidifierStatus'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Drops'
+        ]);
         
         if (!IPS_VariableProfileExists('SmartClimate.DehumidifierStatus')) {
             IPS_CreateVariableProfile('SmartClimate.DehumidifierStatus', 1);
@@ -147,26 +192,7 @@ class BasementClimate extends IPSModuleStrict
         }
         
         // Presentations (Symcon 8+)
-        $iconMap = [
-            'VentilationRecommendation' => 'Wind',
-            'VentilationDetails'        => 'Wind',
-            'DewPointInside'            => 'Drop',
-            'DewPointOutside'           => 'Drop',
-            'AbsHumInside'              => 'Drop',
-            'AbsHumOutside'             => 'Drop',
-            'CurrentHumidity'           => 'Drop',
-            'DehumidifierMaxHum'        => 'Drop',
-            'DehumidifierMinHum'        => 'Drop',
-            'DehumidifierStatus'        => 'Drop',
-        ];
-        foreach ($iconMap as $ident => $icon) {
-            if (@IPS_GetObjectIDByIdent($ident, $this->InstanceID) !== false) {
-                IPS_SetVariableCustomPresentation($this->GetIDForIdent($ident), [
-                    'PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
-                    'ICON'         => $icon
-                ]);
-            }
-        }
+        // Presentations are now handled via IPS_SetVariableCustomPresentation in Create()
         
         // Alarm-Variablen via Trait (Switch mit Farben)
         $this->SetupAlarmPresentation('AlarmTankFull',    'ALARM: Wassertank voll');
@@ -294,7 +320,9 @@ class BasementClimate extends IPSModuleStrict
         }
         
         if ($plugStatus != $newStatus) {
-            RequestAction($plugId, $newStatus);
+            if (!@RequestAction($plugId, $newStatus)) {
+                $this->SLog('WARNING', 'Entfeuchterbefehl fehlgeschlagen', "Dehumidifier Plug ID: $plugId | Ziel: " . ($newStatus ? 'An' : 'Aus'));
+            }
         }
         
         $this->SetValueIfChanged("DehumidifierStatus", $statusText); // Trait
@@ -314,10 +342,14 @@ class BasementClimate extends IPSModuleStrict
         }
         
         if ($rad1 > 0 && IPS_VariableExists($rad1) && GetValue($rad1) != $targetTemp) {
-            @RequestAction($rad1, $targetTemp);
+            if (!@RequestAction($rad1, $targetTemp)) {
+                $this->SLog('WARNING', 'Heizungsbefehl fehlgeschlagen', "Radiator ID: $rad1 | Ziel: $targetTemp°C");
+            }
         }
         if ($rad2 > 0 && IPS_VariableExists($rad2) && GetValue($rad2) != $targetTemp) {
-            @RequestAction($rad2, $targetTemp);
+            if (!@RequestAction($rad2, $targetTemp)) {
+                $this->SLog('WARNING', 'Heizungsbefehl fehlgeschlagen', "Radiator ID: $rad2 | Ziel: $targetTemp°C");
+            }
         }
     }
     

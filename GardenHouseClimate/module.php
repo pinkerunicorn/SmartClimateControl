@@ -33,12 +33,20 @@ class GardenHouseClimate extends IPSModuleStrict
         $this->EnableAction("WinterMode");
         $this->SetValue("WinterMode", true); // Default to true
         
-        $this->RegisterVariableFloat("TargetTemperature", "Zieltemperatur Frostschutz", "~Temperature");
-        IPS_SetIcon($this->GetIDForIdent('TargetTemperature'), 'Temperature');
+        $this->RegisterVariableFloat("TargetTemperature", "Zieltemperatur Frostschutz", "");
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('TargetTemperature'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Temperature',
+            'SUFFIX'        => ' °C',
+            'DECIMALPLACES' => 1
+        ]);
         $this->EnableAction("TargetTemperature");
         
         $this->RegisterVariableInteger("HeaterStatus", "Status Heizung", "");
-        IPS_SetIcon($this->GetIDForIdent('HeaterStatus'), 'Information');
+        IPS_SetVariableCustomPresentation($this->GetIDForIdent('HeaterStatus'), [
+            'PRESENTATION'  => VARIABLE_PRESENTATION_VALUE_PRESENTATION,
+            'ICON'          => 'Information'
+        ]);
         
         if (!IPS_VariableProfileExists('SmartClimate.HeaterStatus')) {
             IPS_CreateVariableProfile('SmartClimate.HeaterStatus', 1);
@@ -215,7 +223,9 @@ class GardenHouseClimate extends IPSModuleStrict
         
         $plugStatus = (bool)GetValue($plugId);
         if ($plugStatus !== $state) {
-            RequestAction($plugId, $state);
+            if (!@RequestAction($plugId, $state)) {
+                $this->SLog('WARNING', 'Heizungsbefehl fehlgeschlagen', "Heater Plug ID: $plugId | Ziel: " . ($state ? 'An' : 'Aus'));
+            }
         }
         $this->SetValue("HeaterStatus", $statusText);
         
